@@ -1,4 +1,10 @@
 * Fix 'visto' command - done
 * Add karma to sqlite  - done
-* clean warnings from dbuexists 
 
+-- 
+  facts branch
+--
+   + learn and forget function aldo quote add funct
+   	+ use 'perm' from users table
+   + use random outputs when getfacts talk
+--
