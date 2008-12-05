@@ -1,2 +1,4 @@
 * Fix 'visto' command - done
-* Add karma to sqlite
+* Add karma to sqlite  - done
+* clean warnings from dbuexists 
+

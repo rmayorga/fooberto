@@ -149,9 +149,27 @@ sub on_public {
 			} 
 		   }
 		}
-		else { $irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); }
+		else {  
+			my $isfact = &fffact("$msg");
+			if (!$isfact) {
+				$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
+			} else {
+				&say("según me comentaron $msg es: $isfact", $nick, $usenick); 
+			}
+		}
 	}
     }
+
+}
+
+
+sub fffact {
+	my $lfact = shift;
+	my $sth = $dbh->prepare
+	   ("SELECT fulltext from facts where fact='$lfact'");
+	$sth->execute();
+	my $row = $sth->fetchrow;
+	if ($row) { return $row } else { return undef }
 
 }
 
