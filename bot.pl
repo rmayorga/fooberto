@@ -7,10 +7,13 @@ use Net::Google;
 use WWW::Wikipedia;
 use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
 
+use DBI;
+# database should como from the config file TODO
+my $dbh = DBI->connect("dbi:SQLite:dbname=bot.db","","");
 #should go in the conffile too
 my $logfile = "./foobot.log";
 #open(LOG,">>$logfile") || die("This file will not open!");
-sub CHANNEL () { "#rm-bot" }
+sub CHANNEL () { "#debian-gt" }
 
 my ($irc) = POE::Component::IRC->spawn();
 
@@ -37,7 +40,7 @@ sub bot_start {
           { Nick => 'foobot',
             Username => 'foobot',
             Ircname  => 'Fooberto',
-            Server   => 'irc.freenode.net',
+            Server   => 'irc.debian.org',
             Port     => '6667',
           }
     );
@@ -60,6 +63,8 @@ sub on_public {
     print " [$ts] <$nick:$channel> $msg\n";
 #chanlog
     &chanlog(" [$ts] <$nick:$channel> $msg");
+#log at sqlite to (FIXME use the same function)
+    &dblog($nick, $msg);
     
     # capture command char (also this should go on the config file)
     my $commandchar = "@";
@@ -112,10 +117,49 @@ sub on_public {
 			}
 		   }
 		}
+		elsif ($msg =~ m/visto/i) {
+		   $msg =~ s/visto//i;
+		   if (length($msg) >= 1) {
+			$msg =~ s/\ +//g;
+			my @seen = &dbuexist($msg);
+			if ($seen[0]) {
+			    my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue $seen[1]";
+			    &say($msout, $nick, $usenick);
+			} else {
+			   &say("ese ser mitologico núnca entro a este antro de perdición", $nick, $usenick);
+			}
+		   }
+		}
 		else { $irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); }
 	}
     }
 
+}
+
+sub dbuexist {
+	my $nick = shift;
+	my $sth = $dbh->prepare
+	   ("SELECT seen, last from users where NICK='$nick'");
+	$sth->execute();
+	my @row = $sth->fetchrow_array;
+	if ($row[0]) {
+		#&say("en dbuexist: $row[0]", $nick, "no");
+		return @row;
+	} else { return undef }
+}
+
+sub dblog {
+	my ($nick, $msg) = @_;
+	my @seen = &dbuexist($nick); 
+	if ($seen[0]) {
+		$dbh->do("UPDATE users SET seen=datetime('now'), last='$msg' WHERE nick='$nick'");
+		#&say("UPDAE $nick, $msg", $nick, "no");
+	} else {
+		#FIXME bot never made any update on new users, or at least check if it is doing it
+		my $sth = $dbh->prepare("INSERT INTO users (nick, seen, last) VALUES ('$nick', datetime('now'), '$msg')");
+		$sth->execute();
+		#&say("INSERT $nick, $msg", $nick, "no");
+	}
 }
 
 sub definir {
