@@ -66,6 +66,8 @@ sub on_public {
 #log at sqlite to (FIXME use the same function)
     &dblog($nick, "$msg");
     
+# karma catcher
+    &karmacatch($nick, $msg);
     # capture command char (also this should go on the config file)
     my $commandchar = "@";
 # not using ^^^^ yet should be, TODO
@@ -133,6 +135,36 @@ sub on_public {
 		else { $irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); }
 	}
     }
+
+}
+
+#TODO fix this fucking karmacatch
+
+sub karmacatch {
+	my ($giver, $given) = @_;
+	my @k = ("$giver", ($given =~ m/(\+\+|--)/));
+	my $karma=0;
+	if ($given =~ s/(\+\+|--)// ne $giver) { 
+		push (@k, $given);
+		&say("$k[0] $k[1], $k[2]", $giver, "no");
+	} else { return }
+	my $lucky = &dbuexist($k[2]);
+	if ($lucky) {
+		&say("a punto de darle karma a $k[2]", $giver, "no");
+	     my $sth = $dbh->prepare
+	         ("SELECT karma from users where NICK='$lucky'");
+	     $sth->execute();
+	     my $row = $sth->fetchrow;
+	     #if ($row[0] = 0) { $
+	     if ($k[1] eq '++') {
+		     my $karma = $row++;
+	     } else {
+		     &say ("para abajo", $k[2], $giver, "no");
+		     my $karma = $row - 1;
+		     &say ($karma, $k[2], $giver, "no");
+	     }
+             $dbh->do("UPDATE users SET karma='$karma' WHERE nick='$lucky'");
+	}
 
 }
 
