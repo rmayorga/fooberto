@@ -138,7 +138,7 @@ sub on_public {
 
 }
 
-#TODO fix this fucking karmacatch
+#TODO fix this fucking karmacatch to deny that the same user gives karma to himself
 
 sub karmacatch {
 	my ($giver, $given) = @_;
@@ -148,7 +148,7 @@ sub karmacatch {
 		push (@k, $given);
 		&say("$k[0] $k[1], $k[2]", $giver, "no");
 	} else { return }
-	my $lucky = &dbuexist($k[2]);
+	my $lucky = $given if ( &dbuexist($k[2]) );
 	if ($lucky) {
 		&say("a punto de darle karma a $k[2]", $giver, "no");
 	     my $sth = $dbh->prepare
@@ -157,13 +157,13 @@ sub karmacatch {
 	     my $row = $sth->fetchrow;
 	     #if ($row[0] = 0) { $
 	     if ($k[1] eq '++') {
-		     my $karma = $row++;
+		     $row++;
 	     } else {
 		     &say ("para abajo", $k[2], $giver, "no");
-		     my $karma = $row - 1;
-		     &say ($karma, $k[2], $giver, "no");
+		     $row--;
+		     &say ($row, $k[2], $giver, "no");
 	     }
-             $dbh->do("UPDATE users SET karma='$karma' WHERE nick='$lucky'");
+             $dbh->do("UPDATE users SET karma='$row' WHERE nick='$lucky'");
 	}
 
 }
