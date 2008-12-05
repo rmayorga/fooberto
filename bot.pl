@@ -158,20 +158,10 @@ sub on_public {
 		   $fulltext =~ s/(que.+$fact.+es)//g;
 
 		   if ((length($fact) >= 1) and (length($fulltext)>=1)) {
-			#$msg =~ s/\ +//g;
-			#my @seen = &dbuexist($msg);
 			my $getfact = &fffact("$fact");
 			if (!$getfact) {
 			   &putfact("$fact", "$fulltext", "$nick");
 			}
-			   #my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue $seen[1]";
-			    #&say($msout, $nick, $usenick);
-			#    my $karma = &getkarma($msg);
-			#    if ($karma < 0 ) {
-			#	    &say("ese tal $msg esta mal, $karma", $nick, $usenick);
-			#    } elsif ( $karma > 0) { 
-			#	    &say("parece que $msg se porta bien, $karma", $nick, $usenick);
-			#   } elsif ( $karma == 0 ) { &say("creo que $msg es _neutral_ , $karma", $nick, $usenick); }
 		    } 
 		   
 		}
