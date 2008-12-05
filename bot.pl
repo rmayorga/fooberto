@@ -64,7 +64,7 @@ sub on_public {
 #chanlog
     &chanlog(" [$ts] <$nick:$channel> $msg");
 #log at sqlite to (FIXME use the same function)
-    &dblog($nick, "$msg");
+    &dblog("$nick", "$msg");
     
 # karma catcher
     &karmacatch($nick, $msg);
@@ -149,12 +149,40 @@ sub on_public {
 			} 
 		   }
 		}
+		elsif ($msg =~ m/aprender que.+es.+/i) {
+		   $msg =~ s/aprender//i;
+		   my $fact = $msg;
+		   my $fulltext = $msg;
+		   $fact =~ s/(que\ )|(es.+)//g;
+		   $fact =~ s/\ +//g;
+		   $fulltext =~ s/(que.+$fact.+es)//g;
+
+		   if ((length($fact) >= 1) and (length($fulltext)>=1)) {
+			#$msg =~ s/\ +//g;
+			#my @seen = &dbuexist($msg);
+			my $getfact = &fffact("$fact");
+			if (!$getfact) {
+			   &putfact("$fact", "$fulltext", "$nick");
+			}
+			   #my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue $seen[1]";
+			    #&say($msout, $nick, $usenick);
+			#    my $karma = &getkarma($msg);
+			#    if ($karma < 0 ) {
+			#	    &say("ese tal $msg esta mal, $karma", $nick, $usenick);
+			#    } elsif ( $karma > 0) { 
+			#	    &say("parece que $msg se porta bien, $karma", $nick, $usenick);
+			#   } elsif ( $karma == 0 ) { &say("creo que $msg es _neutral_ , $karma", $nick, $usenick); }
+		    } 
+		   
+		}
 		else {  
+			$msg =~ s/\ +//g;
 			my $isfact = &fffact("$msg");
 			if (!$isfact) {
 				$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
 			} else {
-				&say("según me comentaron $msg es: $isfact", $nick, $usenick); 
+				&say("según me comentaron $msg es $isfact", $nick, $usenick); 
+
 			}
 		}
 	}
@@ -162,6 +190,13 @@ sub on_public {
 
 }
 
+
+sub putfact {
+	my ($fact, $fulltext, $nick) = @_;
+	my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now'), '$fact', '$fulltext', '$nick') ");
+	$sth->execute();
+	# (nick, seen, last) VALUES ('$nick', datetime('now'), '$msg')");
+}
 
 sub fffact {
 	my $lfact = shift;
