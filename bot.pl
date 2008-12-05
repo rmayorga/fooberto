@@ -79,18 +79,18 @@ sub on_public {
 			&say("pong!", $nick, $usenick);
 		}
 		# fortune cookies
-		if ($msg =~ m/fortune/i) {
+		elsif ($msg =~ m/fortune/i) {
 		    my $out = &fortune();
 		    &say($out, $nick, $usenick);
 		}
-		if ($msg =~ m/google/i) {
+		elsif ($msg =~ m/google/i) {
 		   $msg =~ s/google//i;
 		   if (length($msg) >= 1) {
 		        my $out = &google($msg);
 			&say($out, $nick, $usenick);
 		   }
 		}
-		if ($msg =~ m/decifrar/i) {
+		elsif ($msg =~ m/decifrar/i) {
 		   $msg =~ s/decifrar//i;
 		   if (length($msg) >= 1) {
 		        my $out = &decifrar($msg);
@@ -101,7 +101,7 @@ sub on_public {
 			}
 		   }
 		}
-		if ($msg =~ m/definir/i) {
+		elsif ($msg =~ m/definir/i) {
 		   $msg =~ s/definir//i;
 		   if (length($msg) >= 1) {
 		        my $out = &definir($msg);
@@ -119,6 +119,7 @@ sub on_public {
 }
 
 sub definir {
+#TODO this have some problems when the word has UTF-8 chars, like 'ratón'
 	my $word = shift;
 	my $wiki = WWW::Wikipedia->new();
 	$wiki->language( 'es' );
