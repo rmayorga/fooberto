@@ -13,7 +13,7 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=bot.db","","");
 #should go in the conffile too
 my $logfile = "./foobot.log";
 #open(LOG,">>$logfile") || die("This file will not open!");
-sub CHANNEL () { "#debian-gt" }
+sub CHANNEL () { "#rm-bot" }
 
 my ($irc) = POE::Component::IRC->spawn();
 
@@ -40,7 +40,7 @@ sub bot_start {
           { Nick => 'foobot',
             Username => 'foobot',
             Ircname  => 'Fooberto',
-            Server   => 'irc.debian.org',
+            Server   => 'localhost',
             Port     => '6667',
           }
     );
@@ -64,7 +64,7 @@ sub on_public {
 #chanlog
     &chanlog(" [$ts] <$nick:$channel> $msg");
 #log at sqlite to (FIXME use the same function)
-    &dblog($nick, $msg);
+    &dblog($nick, "$msg");
     
     # capture command char (also this should go on the config file)
     my $commandchar = "@";
