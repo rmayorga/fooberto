@@ -144,13 +144,12 @@ sub karmacatch {
 	my ($giver, $given) = @_;
 	my @k = ("$giver", ($given =~ m/(\+\+|--)/));
 	my $karma=0;
-	if ($given =~ s/(\+\+|--)// ne $giver) { 
+	if ($given !~ m/$giver/i) { 
+		$given =~ s/(\+\+|--)//;
 		push (@k, $given);
-		&say("$k[0] $k[1], $k[2]", $giver, "no");
 	} else { return }
 	my $lucky = $given if ( &dbuexist($k[2]) );
 	if ($lucky) {
-		&say("a punto de darle karma a $k[2]", $giver, "no");
 	     my $sth = $dbh->prepare
 	         ("SELECT karma from users where NICK='$lucky'");
 	     $sth->execute();
@@ -159,9 +158,7 @@ sub karmacatch {
 	     if ($k[1] eq '++') {
 		     $row++;
 	     } else {
-		     &say ("para abajo", $k[2], $giver, "no");
 		     $row--;
-		     &say ($row, $k[2], $giver, "no");
 	     }
              $dbh->do("UPDATE users SET karma='$row' WHERE nick='$lucky'");
 	}
