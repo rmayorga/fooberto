@@ -132,11 +132,40 @@ sub on_public {
 			}
 		   }
 		}
+		elsif ($msg =~ m/karma/i) {
+		   $msg =~ s/karma//i;
+		   if (length($msg) >= 1) {
+			$msg =~ s/\ +//g;
+			my @seen = &dbuexist($msg);
+			if ($seen[0]) {
+			    #my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue $seen[1]";
+			    #&say($msout, $nick, $usenick);
+			    my $karma = &getkarma($msg);
+			    if ($karma < 0 ) {
+				    &say("ese tal $msg esta mal, $karma", $nick, $usenick);
+			    } elsif ( $karma > 0) { 
+				    &say("parece que $msg se porta bien, $karma", $nick, $usenick);
+			    } elsif ( $karma == 0 ) { &say("creo que $msg es _neutral_ , $karma", $nick, $usenick); }
+			} 
+		   }
+		}
 		else { $irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); }
 	}
     }
 
 }
+
+
+sub getkarma {
+	my $nick = shift;
+	my $sth = $dbh->prepare
+	    ("SELECT karma from users where NICK='$nick'");
+	$sth->execute();
+	my $row = $sth->fetchrow;
+	return $row;
+}
+
+
 
 #TODO fix this fucking karmacatch to deny that the same user gives karma to himself
 
