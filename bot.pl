@@ -13,7 +13,7 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=bot.db","","");
 #should go in the conffile too
 my $logfile = "./foobot.log";
 #open(LOG,">>$logfile") || die("This file will not open!");
-sub CHANNEL () { "#rm-bot" }
+sub CHANNEL () { "#linux.org.sv" }
 
 my ($irc) = POE::Component::IRC->spawn();
 
@@ -40,7 +40,7 @@ sub bot_start {
           { Nick => 'foobot',
             Username => 'foobot',
             Ircname  => 'Fooberto',
-            Server   => 'localhost',
+            Server   => 'irc.freenode.net',
             Port     => '6667',
           }
     );
