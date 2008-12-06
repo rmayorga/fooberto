@@ -68,6 +68,7 @@ sub on_public {
     
 # karma catcher
     &karmacatch($nick, $msg);
+    &correctuser($msg, $nick);
     # capture command char (also this should go on the config file)
     my $commandchar = "@";
 # not using ^^^^ yet should be, TODO
@@ -189,6 +190,28 @@ sub on_public {
 	}
     }
 
+}
+
+# this is totaly *WRONG* this is a bad approch, /me should not try to write
+# code when is a kind of drunk
+sub correctuser {
+# Add a check if the user exists even if tryi to use the regexp->FIXME
+	my ($msg, $nick) = @_;
+	if ($msg =~ m/s\/.+\/$/) {
+	    my $sth = $dbh->prepare
+                ("SELECT rowid from users where NICK='$nick'");
+	    $sth->execute();
+	    my $old = $sth->fetchrow;
+	    $old--;
+	    $sth = $dbh->prepare
+	        ("SELECT rowid from users where rowid='$old'");
+	    $sth->execute();
+	    my $rowi = $sth->fetchrow;
+	    $msg =~ s/^s//;
+	    my @chan = split(/\//, $msg);
+	    $rowi =~ s/$chan[1]/$chan[2]/g;
+	    &say("$nick en realidad quería decir $rowi", $nick, "no");
+      }
 }
 
 sub forgetfact {
