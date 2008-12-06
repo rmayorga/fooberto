@@ -259,14 +259,16 @@ sub karmacatch {
 
 sub dbuexist {
 	my $nick = shift;
-	my $sth = $dbh->prepare
-	   ("SELECT seen, last from users where NICK='$nick'");
-	$sth->execute();
-	my @row = $sth->fetchrow_array;
-	if ($row[0]) {
+	if ($nick) {
+	    my $sth = $dbh->prepare
+	        ("SELECT seen, last from users where NICK='$nick'");
+	        $sth->execute();
+	        my @row = $sth->fetchrow_array;
+	        if ($row[0]) {
 		#&say("en dbuexist: $row[0]", $nick, "no");
-		return @row;
-	} else { return undef }
+		    return @row;
+	        } else { return undef }
+	}
 }
 
 sub dblog {
