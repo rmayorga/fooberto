@@ -153,7 +153,7 @@ sub on_public {
 		   $msg =~ s/aprender//i;
 		   my $fact = $msg;
 		   my $fulltext = $msg;
-		   $fact =~ s/(que\ )|(es.+)//g;
+		   $fact =~ s/(que\ )|(\ es.+)//g;
 		   $fact =~ s/\ +//g;
 		   $fulltext =~ s/(que.+$fact.+es)//g;
 
@@ -165,11 +165,22 @@ sub on_public {
 		    } 
 		   
 		}
+		elsif ($msg =~ m/olvidar/i) {
+		   $msg =~ s/olvidar//i;
+		   $msg =~ s/\ +//g;
+		   if (length($msg) >= 1) {
+			   my $isfact = &fffact("$msg");
+			   if ($isfact) {
+			   	&forgetfact($msg) # unless( !$isfact);
+			   }
+		   }
+		}
 		else {  
 			$msg =~ s/\ +//g;
 			my $isfact = &fffact("$msg");
 			if (!$isfact) {
-				$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
+				my $foo = 'no';
+				#$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
 			} else {
 				&say("según me comentaron $msg es $isfact", $nick, $usenick); 
 
@@ -180,6 +191,15 @@ sub on_public {
 
 }
 
+sub forgetfact {
+	my $dfact = shift;
+	my $sth = $dbh->prepare
+	    ("SELECT rowid from facts where fact='$dfact'");
+	$sth->execute();
+	my $row = $sth->fetchrow;
+	$dbh->do("DELETE from facts where rowid='$row'");
+
+}
 
 sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
