@@ -273,6 +273,7 @@ sub dbuexist {
 
 sub dblog {
 	my ($nick, $msg) = @_;
+	$msg =~ s/'//g;
 	my @seen = &dbuexist($nick); 
 	if ($seen[0]) {
 		$dbh->do("UPDATE users SET seen=datetime('now'), last='$msg' WHERE nick='$nick'");
