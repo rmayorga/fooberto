@@ -14,7 +14,7 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=bot.db","","");
 #should go in the conffile too
 my $logfile = "./foobot.log";
 #open(LOG,">>$logfile") || die("This file will not open!");
-sub CHANNEL () { "#rm-bot" }
+sub CHANNEL () { "#linux.org.sv" }
 
 my ($irc) = POE::Component::IRC->spawn();
 
@@ -41,7 +41,7 @@ sub bot_start {
           { Nick => 'foobot',
             Username => 'foobot',
             Ircname  => 'Fooberto',
-            Server   => 'localhost',
+            Server   => 'irc.freenode.net',
             Port     => '6667',
           }
     );
@@ -188,9 +188,7 @@ sub on_public {
 				my @randmsg = ("según me comentaron", "en la calle escuche rumores que dicen que", 
 				"dicen las malas lenguas que", "
 				yo alguna vez escuche que", "a mi alguien me dijo que", "todos dicen que");
-				my $random = rand(@randmsg);
-				$random*=1;
-				&say("$randmsg[$random] $msg es $isfact", $nick, $usenick); 
+				&say("$randmsg[ int rand @randmsg ] $msg es $isfact", $nick, $usenick); 
 
 			}
 		}
