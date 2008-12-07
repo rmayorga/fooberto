@@ -205,10 +205,6 @@ sub correctuser {
 	    my $rowi = $sth->fetchrow;
 	    $msg =~ s/^s//;
 	    my @chan = split(/\//, $msg);
-	    # just to make thinks clear
-	    my $oldi = $chan[1];
-	    my $new = $chan[2];
-	    #$rowi =~ s/$oldi/$new/g;
 	    $rowi =~ s/$chan[1]/$chan[2]/g;
 	    &say("$nick en realidad quería decir \"$rowi\"", $nick, "no");
       }
