@@ -7,5 +7,5 @@
    + learn and forget function aldo quote add funct
    	+ use 'perm' from users table
    + use random outputs when getfacts talk
-   + clean wear warning on dbuexist
+   + clean wear warning on dbuexist - done at trunk branch
 --
