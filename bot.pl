@@ -208,8 +208,8 @@ sub correctuser {
 	    # just to make thinks clear
 	    my $oldi = $chan[1];
 	    my $new = $chan[2];
-	    &say (" el original era $oldi, el nuevo es $new", $nick, "no");
-	    $rowi =~ s/$oldi/$new/g;
+	    #$rowi =~ s/$oldi/$new/g;
+	    $rowi =~ s/$chan[1]/$chan[2]/g;
 	    &say("$nick en realidad quería decir \"$rowi\"", $nick, "no");
       }
 }
