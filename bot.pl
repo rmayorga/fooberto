@@ -214,7 +214,10 @@ sub fffact {
 	   ("SELECT fulltext from facts where fact='$lfact'");
 	$sth->execute();
 	my $row = $sth->fetchrow;
-	if ($row) { return $row } else { return undef }
+	if ($row) { 
+		$row =~ s/^\ +//; 
+		return $row 
+	} else { return undef }
 
 }
 
