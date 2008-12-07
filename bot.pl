@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use warnings;
 use strict;
+use integer;
 use POE;
 use POE::Component::IRC;
 use Net::Google;
@@ -184,7 +185,12 @@ sub on_public {
 				my $foo = 'no';
 				#$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
 			} else {
-				&say("según me comentaron $msg es $isfact", $nick, $usenick); 
+				my @randmsg = ("según me comentaron", "en la calle escuche rumores que dicen que", 
+				"dicen las malas lenguas que", "
+				yo alguna vez escuche que", "a mi alguien me dijo que", "todos dicen que");
+				my $random = rand(@randmsg);
+				$random*=1;
+				&say("$randmsg[$random] $msg es $isfact", $nick, $usenick); 
 
 			}
 		}
