@@ -1,0 +1,3 @@
+This was a testing implementation branch, it uses sqlite branch and implementes 'facts'
+using facts table.
+At this time this branch was merge with master
