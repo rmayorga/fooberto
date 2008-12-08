@@ -206,7 +206,8 @@ sub on_public {
 		else {  
 			$msg =~ s/^\ +//g;
 			my $isfact = &fffact("$msg");
-			my $isaction = &faction("$msg");
+			my $action = $msg;
+			my $isaction = &faction($channel, "$action");
 			if (!$isfact) {
 				my $foo = 'no';
 				#$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
@@ -228,8 +229,25 @@ sub on_public {
 
 }
 sub faction {
-# get action
+	my ($channel, $action) = @_;
+	my $msg = $action;
+	my $who = $action;
+	$who =~ s/^\w+ //;
+	$action =~ s/\ \w+.+//;
+	#&say("who = $who,  action = $action y el mensaje $msg", 'rmayorga', 'no');
+	
+	#&doaction("$channel", "mira mal a $who");
+	
+	my $sth=$dbh->prepare
+	    ("SELECT action from actions where id='$action'");
+	$sth->execute();
+	my $row = $sth->fetchrow;
+	if ($row) {
+		$row =~ s/NICK/$who/;
+		&doaction("$channel", "$row");
+	} else { return undef }
 }
+
 
 sub quotegetrand {
 	 my @rest;
@@ -449,6 +467,11 @@ sub say {
 	return
 }
 
+sub doaction {
+	my ($channel, $msg) = @_;
+		$irc->yield( ctcp => $channel => "ACTION $msg");
+	return
+}
 sub chanlog {
 	my $logme = shift;
 	open(LOG,">>$logfile") || die("This file will not open!");
