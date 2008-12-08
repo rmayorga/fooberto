@@ -157,9 +157,9 @@ sub on_public {
 		   $msg =~ s/aprender//i;
 		   my $fact = $msg;
 		   my $fulltext = $msg;
-		   $fact =~ s/(que\ )|(\ es.+)//g;
+		   $fact =~ s/(que\ )|(\ es\ .+)//g;
 		   $fact =~ s/\ +//g;
-		   $fulltext =~ s/(que.+$fact.+es)//g;
+		   $fulltext =~ s/(que\ $fact\ es)//g;
 
 		   if ((length($fact) >= 1) and (length($fulltext)>=1)) {
 			my $getfact = &fffact("$fact");
@@ -200,7 +200,6 @@ sub on_public {
 				   $msg =~ s/^random//;
 				   my $randqu = &quotegetrand();
 				   &say("\"$randqu\"", $nick, $usenick);
-				   #&say("\"$randqu [ int rand @randqu ]\"", $nick, $usenick);
 			   }
 		   }
 		}
@@ -212,9 +211,12 @@ sub on_public {
 				#$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
 			} else {
 				my @randmsg = ("según me comentaron", "en la calle escuche rumores que dicen que", 
-				"dicen las malas lenguas que", "
-				yo alguna vez escuche que", "a mi alguien me dijo que", "todos dicen que");
+				"dicen las malas lenguas que",
+				"yo alguna vez escuche que", "a mi alguien me dijo que", "todos dicen que");
+				#my $randnum = int rand @randmsg;
+				#while ($randum > @randmsg) { $randnum = int rand @randmsg; }
 				&say("$randmsg[ int rand @randmsg ] $msg es $isfact", $nick, $usenick); 
+				#&say("$randmsg[$randnum] $msg es $isfact", $nick, $usenick); 
 
 			}
 		}
