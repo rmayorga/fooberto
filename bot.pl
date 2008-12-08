@@ -186,6 +186,16 @@ sub on_public {
 			   my $ok = &authen($nick, "$msg");
 		   }
 		}
+		elsif ($msg =~ m/^action/i) {
+		   $msg =~ s/^action//i;
+		   $msg =~ s/^\ +//g;
+		   my $check = &checkauth($nick);
+		   if ($check) {
+		   	if (length($msg) >= 1) {
+				&actionadd($msg, $nick)
+		  	 }
+		   }
+		}
 		elsif ($msg =~ m/quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
@@ -228,6 +238,18 @@ sub on_public {
     }
 
 }
+
+sub actionadd {
+	my ($msg, $nick) = @_;
+	my $actid = $msg;
+	$actid =~ s/\ \w+.+//;
+	my $action = $msg;
+	$action  =~ s/^\w+ //;
+        my $sth = $dbh->prepare
+           ("INSERT INTO actions (id, date, who, action) VALUES ('$actid', datetime('now'), '$nick', '$action')");
+        $sth->execute();
+}
+
 sub faction {
 	my ($channel, $action) = @_;
 	my $msg = $action;
@@ -235,7 +257,6 @@ sub faction {
 	$who =~ s/^\w+ //;
 	$action =~ s/\ \w+.+//;
 	#&say("who = $who,  action = $action y el mensaje $msg", 'rmayorga', 'no');
-	
 	#&doaction("$channel", "mira mal a $who");
 	
 	my $sth=$dbh->prepare
