@@ -14,7 +14,7 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=bot.db","","");
 #should go in the conffile too
 my $logfile = "./foobot.log";
 #open(LOG,">>$logfile") || die("This file will not open!");
-sub CHANNEL () { "#linux.org.sv" }
+sub CHANNEL () { "#rm-bot" }
 
 my ($irc) = POE::Component::IRC->spawn();
 
@@ -23,6 +23,7 @@ POE::Session->create(
         _start     => \&bot_start,
         irc_001    => \&on_connect,
         irc_public => \&on_public,
+	irc_msg    => \&on_public, 
     },
 );
 
@@ -41,7 +42,7 @@ sub bot_start {
           { Nick => 'foobot',
             Username => 'foobot',
             Ircname  => 'Fooberto',
-            Server   => 'irc.freenode.net',
+            Server   => 'localhost',
             Port     => '6667',
           }
     );
@@ -178,6 +179,31 @@ sub on_public {
 			   }
 		   }
 		}
+		elsif ($msg =~ m/identify/i) {
+		   $msg =~ s/identify//i;
+		   $msg =~ s/\ +//g;
+		   if (length($msg) >= 1) {
+			   my $ok = &authen($nick, "$msg");
+		   }
+		}
+		elsif ($msg =~ m/quote/i) {
+		   $msg =~ s/quote//i;
+		   $msg =~ s/^\ +//g;
+		   if (length($msg) >= 1) {
+			   my $check = &checkauth($nick);
+			   if ($msg =~ m/^add/) {
+				   if ($check) {
+					   $msg =~ s/^add//;
+					   &quoteadd("$msg", $nick);
+				   }
+			   } elsif ($msg =~ m/^random/) {
+				   $msg =~ s/^random//;
+				   my $randqu = &quotegetrand();
+				   &say("\"$randqu\"", $nick, $usenick);
+				   #&say("\"$randqu [ int rand @randqu ]\"", $nick, $usenick);
+			   }
+		   }
+		}
 		else {  
 			$msg =~ s/\ +//g;
 			my $isfact = &fffact("$msg");
@@ -195,6 +221,53 @@ sub on_public {
 	}
     }
 
+}
+
+sub quotegetrand {
+	 my @rest;
+	 my $sth = $dbh->prepare
+	    ("select COUNT(*) from facts where tipe='quote'");
+	 $sth->execute();
+	 my $rown = $sth->fetchrow;
+	 $sth = $dbh->prepare
+	   ("SELECT fulltext from facts where tipe='quote'");
+	 $sth->execute();
+	 for (1..$rown) {
+		 push (@rest, $sth->fetchrow())
+	 }
+	 my $out = $rest[int rand @rest];
+	 return $out;
+}
+
+
+sub quoteadd {
+	my ($msg, $nick)  = @_;
+	my $sth = $dbh->prepare
+	     ("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('quote', date('now'), datetime('now'), '$msg', '$nick') ");
+	 $sth->execute();
+
+}
+
+sub checkauth {
+	my $nick = shift;
+	my $sth = $dbh->prepare
+	    ("SELECT perm from users where nick='$nick'");
+	$sth->execute();
+	my $ok = $sth->fetchrow;
+	if ($ok) { return "ok" } else { return undef }
+}
+
+sub authen {
+	my ($nick, $gpass) = @_;
+	my $sth = $dbh->prepare
+	   ("SELECT pass from users where nick='$nick'");
+	$sth->execute();
+	my $dbpass = $sth->fetchrow;
+	if ($dbpass) {
+		if ($dbpass eq $gpass) {
+			$dbh->do("UPDATE users SET perm='aut' WHERE nick='$nick'");
+		}
+	}
 }
 
 # this is totaly *WRONG* this is a bad approch, /me should not try to write

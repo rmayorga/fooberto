@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
 sqlite3 bot.db <<SQL_INIT_1
- CREATE TABLE users (nick TEXT, seen DATE, command TEXT, last TEXT, perm TEXT, karma NUM);
+ CREATE TABLE users (nick TEXT, seen DATE, command TEXT, last TEXT, perm TEXT, karma NUM, pass TEXT);
  CREATE TABLE facts (tipe TEXT, date DATE, fact TEXT NOT NULL, fulltext TEXT, who TEXT, PRIMARY KEY (fact));
 SQL_INIT_1
