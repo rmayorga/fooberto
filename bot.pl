@@ -85,23 +85,23 @@ sub on_public {
 	
 	for ($msg) {
 		#default ping command
-		if ($msg =~ m/ping/i) {
+		if ($msg =~ m/^ping/i) {
 			#$irc->yield( privmsg => CHANNEL, "hola $nick");
 			&say("pong!", $nick, $usenick);
 		}
 		# fortune cookies
-		elsif ($msg =~ m/fortune/i) {
+		elsif ($msg =~ m/^fortune/i) {
 		    my $out = &fortune();
 		    &say($out, $nick, $usenick);
 		}
-		elsif ($msg =~ m/google/i) {
+		elsif ($msg =~ m/^google/i) {
 		   $msg =~ s/google//i;
 		   if (length($msg) >= 1) {
 		        my $out = &google($msg);
 			&say($out, $nick, $usenick);
 		   }
 		}
-		elsif ($msg =~ m/decifrar/i) {
+		elsif ($msg =~ m/^decifrar/i) {
 		   $msg =~ s/decifrar//i;
 		   if (length($msg) >= 1) {
 		        my $out = &decifrar($msg);
@@ -112,7 +112,7 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/definir/i) {
+		elsif ($msg =~ m/^definir/i) {
 		   $msg =~ s/definir//i;
 		   if (length($msg) >= 1) {
 		        my $out = &definir($msg);
@@ -123,7 +123,7 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/visto/i) {
+		elsif ($msg =~ m/^visto/i) {
 		   $msg =~ s/visto//i;
 		   if (length($msg) >= 1) {
 			$msg =~ s/\ +//g;
@@ -136,7 +136,7 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/karma/i) {
+		elsif ($msg =~ m/^karma/i) {
 		   $msg =~ s/karma//i;
 		   if (length($msg) >= 1) {
 			$msg =~ s/\ +//g;
@@ -153,7 +153,7 @@ sub on_public {
 			} 
 		   }
 		}
-		elsif ($msg =~ m/aprender que.+es.+/i) {
+		elsif ($msg =~ m/^aprender que.+es.+/i) {
 		   $msg =~ s/aprender//i;
 		   my $fact = $msg;
 		   my $fulltext = $msg;
@@ -169,7 +169,7 @@ sub on_public {
 		    } 
 		   
 		}
-		elsif ($msg =~ m/olvidar/i) {
+		elsif ($msg =~ m/^olvidar/i) {
 		   $msg =~ s/olvidar//i;
 		   $msg =~ s/\ +//g;
 		   if (length($msg) >= 1) {
@@ -179,7 +179,7 @@ sub on_public {
 			   }
 		   }
 		}
-		elsif ($msg =~ m/identify/i) {
+		elsif ($msg =~ m/^identify/i) {
 		   $msg =~ s/identify//i;
 		   $msg =~ s/\ +//g;
 		   if (length($msg) >= 1) {
@@ -199,7 +199,7 @@ sub on_public {
 		  	 }
 		   }
 		}
-		elsif ($msg =~ m/quote/i) {
+		elsif ($msg =~ m/^quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
