@@ -67,9 +67,9 @@ sub on_public {
     &chanlog(" [$ts] <$nick:$channel> $msg");
 # catch users correcting words
     &correctuser($msg, $nick);
-#log at sqlite to (FIXME use the same function)
+#log at sqlite to (FIXME use the same chanlog function)
     &dblog("$nick", "$msg");
-    
+    &catchignore("$nick", "$msg");
 # karma catcher
     &karmacatch($nick, $msg);
     # capture command char (also this should go on the config file)
@@ -242,6 +242,13 @@ sub on_public {
 
 }
 
+sub catchignore {
+	my ($nick, $msg) = @_;
+	if ( ($msg =~ m/^@/) || ($msg =~ m/^foobot(,|;|:).+/ ) ) {
+		my $command = 1;
+	}
+}
+
 
 # Random option is not working propertly 
 # FIXME
@@ -275,7 +282,7 @@ sub actionadd {
 	$action  =~ s/^\w+ //;
 	return undef unless $msg =~ m/NICK/;
         my $sth = $dbh->prepare
-           ("INSERT INTO actions (id, date, who, action) VALUES ('$actid', datetime('now'), '$nick', '$action')");
+           ("INSERT INTO actions (id, date, who, action) VALUES ('$actid', datetime('now','localtime'), '$nick', '$action')");
         $sth->execute();
 }
 
@@ -324,7 +331,7 @@ sub quotegetrand {
 sub quoteadd {
 	my ($msg, $nick)  = @_;
 	my $sth = $dbh->prepare
-	     ("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('quote', date('now'), datetime('now'), '$msg', '$nick') ");
+	     ("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('quote', date('now','localtime'), datetime('now','localtime'), '$msg', '$nick') ");
 	 $sth->execute();
 
 }
@@ -380,7 +387,7 @@ sub forgetfact {
 
 sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
-	my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now'), '$fact', '$fulltext', '$nick') ");
+	my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
 	$sth->execute();
 	# (nick, seen, last) VALUES ('$nick', datetime('now'), '$msg')");
 }
@@ -456,11 +463,11 @@ sub dblog {
 	$msg =~ s/'//g;
 	my @seen = &dbuexist($nick); 
 	if ($seen[0]) {
-		$dbh->do("UPDATE users SET seen=datetime('now'), last='$msg' WHERE nick='$nick'");
+		$dbh->do("UPDATE users SET seen=datetime('now','localtime'), last='$msg' WHERE nick='$nick'");
 		#&say("UPDAE $nick, $msg", $nick, "no");
 	} else {
 		#FIXME bot never made any update on new users, or at least check if it is doing it
-		my $sth = $dbh->prepare("INSERT INTO users (nick, seen, last) VALUES ('$nick', datetime('now'), '$msg')");
+		my $sth = $dbh->prepare("INSERT INTO users (nick, seen, last) VALUES ('$nick', datetime('now','localtime'), '$msg')");
 		$sth->execute();
 		#&say("INSERT $nick, $msg", $nick, "no");
 	}
