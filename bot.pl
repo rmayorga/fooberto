@@ -187,10 +187,13 @@ sub on_public {
 		   }
 		}
 		elsif ($msg =~ m/^action/i) {
+		   my $add;
 		   $msg =~ s/^action//i;
 		   $msg =~ s/^\ +//g;
+		   if ($msg =~m/list/) { &actionlist($nick); $add = 'no'; }
+		   if ($msg =~s/^random//) { &actionlist($msg, $channel); $add = 'no'; } 
 		   my $check = &checkauth($nick);
-		   if ($check) {
+		   if (($check) && (!$add))  {
 		   	if (length($msg) >= 1) {
 				&actionadd($msg, $nick)
 		  	 }
@@ -239,12 +242,38 @@ sub on_public {
 
 }
 
+
+# Random option is not working propertly 
+# FIXME
+sub actionlist {
+	my ($nick, $channel) = @_;; 
+	my $who = $nick; 
+	$who =~ s/^\w+ //;
+	my @rest;
+	my $sth = $dbh->prepare
+	    ("SELECT COUNT(*) from actions");
+	$sth->execute();
+	my $rnum = $sth->fetchrow();
+	$sth = $dbh->prepare
+	    ("SELECT id from actions");
+	$sth->execute();
+	for (1..$rnum) {
+		push (@rest , $sth->fetchrow);
+	}
+	&say ("@rest", "$nick", "no") unless $channel; 
+	if ($channel) {
+		$nick =~ s/^\ //;
+		&faction("$nick", $channel, "$rest[int rand @rest] $nick");
+	}
+
+}
 sub actionadd {
 	my ($msg, $nick) = @_;
 	my $actid = $msg;
 	$actid =~ s/\ \w+.+//;
 	my $action = $msg;
 	$action  =~ s/^\w+ //;
+	return undef unless $msg =~ m/NICK/;
         my $sth = $dbh->prepare
            ("INSERT INTO actions (id, date, who, action) VALUES ('$actid', datetime('now'), '$nick', '$action')");
         $sth->execute();
