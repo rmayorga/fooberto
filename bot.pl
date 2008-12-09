@@ -67,9 +67,14 @@ sub on_public {
     &chanlog(" [$ts] <$nick:$channel> $msg");
 # catch users correcting words
     &correctuser($msg, $nick);
+
 #log at sqlite to (FIXME use the same chanlog function)
     &dblog("$nick", "$msg");
-    &catchignore("$nick", "$msg");
+
+#ignoring un-polite-users
+    my $ignore = &catchignore("$nick", "$msg");
+    if (!$ignore) { $msg = '' }
+
 # karma catcher
     &karmacatch($nick, $msg);
     # capture command char (also this should go on the config file)
@@ -199,6 +204,22 @@ sub on_public {
 		  	 }
 		   }
 		}
+		elsif ($msg=~ s/^ignorar//) {
+			$msg =~ s/^\ //;
+			my $check = &checkauth($nick);
+			if($check) {
+				&addignore($nick, $msg);
+			}
+
+		}
+		elsif ($msg=~ s/^perdonar//) {
+			$msg =~ s/^\ //;
+			my $check = &checkauth($nick);
+			if($check) {
+				&forgetignore($msg);
+			}
+
+		}
 		elsif ($msg =~ m/^quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
@@ -242,11 +263,40 @@ sub on_public {
 
 }
 
+sub addignore {
+	my ($nick, $msg) = @_;
+        my $sth = $dbh->prepare
+            ("INSERT INTO igno (nick, date, who, text) VALUES ('$msg', date('now'), '$nick', 'ig')");
+        $sth->execute();
+
+}
+
+sub forgetignore  {
+	my $msg = shift;
+        my $sth = $dbh->prepare
+            ("SELECT rowid from igno where nick='$msg'");
+        $sth->execute();
+        my $row = $sth->fetchrow;
+        $dbh->do("DELETE from igno where rowid='$row'")
+}
+
 sub catchignore {
 	my ($nick, $msg) = @_;
+	my $command;
+	my $tmp= $msg;
 	if ( ($msg =~ m/^@/) || ($msg =~ m/^foobot(,|;|:).+/ ) ) {
-		my $command = 1;
+		if (&checkignore($nick)) { $command = 1; }
 	}
+	if ($command) { return undef } else { return $msg }
+}
+
+sub checkignore {
+	my $nick = shift;
+	my $sth = $dbh->prepare
+	   ("SELECT date from igno where nick='$nick'");
+        $sth->execute();
+	my $igno = $sth->fetchrow();
+	if ($igno) { return 'yes' }
 }
 
 
