@@ -117,6 +117,16 @@ sub on_public {
 			}
 		   }
 		}
+		elsif ($msg =~ m/^es probable/i) {
+		   $msg =~ s/^es probable//i;
+		   if (length($msg) >= 1) {
+			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
+			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
+			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
+					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar');
+			    &say("$prob[ int rand @prob ]", $nick, $usenick);
+			}
+		}
 		elsif ($msg =~ m/^definir/i) {
 		   $msg =~ s/definir//i;
 		   if (length($msg) >= 1) {
