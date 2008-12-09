@@ -1,1 +1,10 @@
 Experimental changes are made here, the the changes are merged to master when they get stable
+
+Depends
+======
+
+I start this on Debian, most debepends are available, and there are some that not
+I collected and made simple .deb packages using dh-make-perl, at some points that Depends would be
+available at Debian, but besides you can just install the package your self
+or use the ugly .deb that can be found here: http://los.talibanes-del.sl/~rmayorga/bot/dep
+
