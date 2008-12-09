@@ -175,7 +175,7 @@ sub on_public {
 		   if (length($msg) >= 1) {
 			   my $isfact = &fffact("$msg");
 			   if ($isfact) {
-			   	&forgetfact($msg) # unless( !$isfact);
+			   	&forgetfact($nick, $msg)  #unless( !$isfact);
 			   }
 		   }
 		}
@@ -217,7 +217,7 @@ sub on_public {
 			$msg =~ s/^\ +//g;
 			my $isfact = &fffact("$msg");
 			my $action = $msg;
-			my $isaction = &faction($channel, "$action");
+			my $isaction = &faction($nick, $channel, "$action");
 			if (!$isfact) {
 				my $foo = 'no';
 				#$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
@@ -251,22 +251,27 @@ sub actionadd {
 }
 
 sub faction {
-	my ($channel, $action) = @_;
+	my ($nick, $channel, $action) = @_;
 	my $msg = $action;
 	my $who = $action;
 	$who =~ s/^\w+ //;
 	$action =~ s/\ \w+.+//;
 	#&say("who = $who,  action = $action y el mensaje $msg", 'rmayorga', 'no');
 	#&doaction("$channel", "mira mal a $who");
-	
 	my $sth=$dbh->prepare
-	    ("SELECT action from actions where id='$action'");
-	$sth->execute();
+	   ("SELECT action from actions where id='$action'");
+        $sth->execute();
 	my $row = $sth->fetchrow;
 	if ($row) {
-		$row =~ s/NICK/$who/;
-		&doaction("$channel", "$row");
+		if ($msg!~m/\w+ \w+./) { 
+			$row =~ s/NICK/$nick/;
+			&doaction("$channel", "$row POR MAJE!");
+			return undef
+		}
+	     $row =~ s/NICK/$who/;
+	     &doaction("$channel", "$row");
 	} else { return undef }
+
 }
 
 
@@ -335,12 +340,12 @@ sub correctuser {
 }
 
 sub forgetfact {
-	my $dfact = shift;
+	my ($nick, $dfact) = @_;
 	my $sth = $dbh->prepare
 	    ("SELECT rowid from facts where fact='$dfact'");
 	$sth->execute();
 	my $row = $sth->fetchrow;
-	$dbh->do("DELETE from facts where rowid='$row'");
+	$dbh->do("DELETE from facts where rowid='$row'") unless ($nick eq $dfact);
 
 }
 
