@@ -7,17 +7,6 @@ use POE::Component::IRC;
 use Net::Google;
 use WWW::Wikipedia;
 use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
-
-# transalting
-use Lingua::Translate
-   (
-     backend => 'Google',
-     api_key => 'ABQIAAAAUXS6s24mLn6X_2M4vIbBrxSKt0upySBinZ2ZLwIloQeWQHTJWBQXe3U4pFNWMQNVS8sU4Gt4vxrwEw',
-     referer => 'http://rmayorga.org',
-     ua      => LWP::UserAgent->new(),
-    );
-
-
 use Config::Simple;
 use Getopt::Std;
 # Just one option at this momment
@@ -245,10 +234,6 @@ sub on_public {
 			}
 
 		}
-		elsif ($msg=~ s/^traducir//) {
-			$msg =~ s/^\ //;
-			my $trans = &transl($msg);
-		}
 		elsif ($msg =~ m/^quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
@@ -302,14 +287,6 @@ sub on_public {
     }
 
 }
-
-sub transl {
-	my $msg = shift;
-# do something some day
-	return
-
-}
-
 
 sub addignore {
 	my ($nick, $msg) = @_;
