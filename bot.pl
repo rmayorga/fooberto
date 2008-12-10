@@ -7,6 +7,17 @@ use POE::Component::IRC;
 use Net::Google;
 use WWW::Wikipedia;
 use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
+
+# transalting
+use Lingua::Translate
+   (
+     backend => 'Google',
+     api_key => 'ABQIAAAAUXS6s24mLn6X_2M4vIbBrxSKt0upySBinZ2ZLwIloQeWQHTJWBQXe3U4pFNWMQNVS8sU4Gt4vxrwEw',
+     referer => 'http://rmayorga.org',
+     ua      => LWP::UserAgent->new(),
+    );
+
+
 use Config::Simple;
 use Getopt::Std;
 # Just one option at this momment
@@ -133,21 +144,6 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/\$?.+/i) {
-		   $msg =~ s/^.+\ .\ //i;
-		   if (length($msg) >= 1) {
-			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
-			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
-			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
-					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar', 'quizás', 'eso es obvio',
-					'no lo veo probable', 'el futuro es obscuro', 'eso es como que el PCN ganara las elecciones',
-					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probale',
-					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
-					'yo no soy walter mercado, como putas voy a saber?');
-					## This might be go on the config file
-			    &say("$prob[ int rand @prob ]", $nick, $usenick) unless ($usenick eq 'no');
-			}
-		}
 		elsif ($msg =~ m/^definir/i) {
 		   $msg =~ s/definir//i;
 		   if (length($msg) >= 1) {
@@ -249,6 +245,10 @@ sub on_public {
 			}
 
 		}
+		elsif ($msg=~ s/^traducir//) {
+			$msg =~ s/^\ //;
+			my $trans = &transl($msg);
+		}
 		elsif ($msg =~ m/^quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
@@ -266,7 +266,21 @@ sub on_public {
 			   }
 		   }
 		}
-		else {  
+		elsif ($msg =~ s/\?$//) {
+		   if (length($msg) >= 1) {
+			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
+			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
+			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
+					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar', 'quizás', 'eso es obvio',
+					'no lo veo probable', 'el futuro es obscuro', 'eso es como que el PCN ganara las elecciones',
+					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probale',
+					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
+					'yo no soy walter mercado, como putas voy a saber?');
+					## This might be go on the config file
+			    &say("$prob[ int rand @prob ]", $nick, $usenick) unless ($usenick eq 'no');
+			}
+
+		} else {  
 			$msg =~ s/^\ +//g;
 			my $isfact = &fffact("$msg");
 			my $action = $msg;
@@ -288,6 +302,14 @@ sub on_public {
     }
 
 }
+
+sub transl {
+	my $msg = shift;
+# do something some day
+	return
+
+}
+
 
 sub addignore {
 	my ($nick, $msg) = @_;
