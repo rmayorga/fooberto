@@ -133,8 +133,8 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/^es probable/i) {
-		   $msg =~ s/^es probable//i;
+		elsif ($msg =~ m/\$?.+/i) {
+		   $msg =~ s/^.+\ .\ //i;
 		   if (length($msg) >= 1) {
 			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
 			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
