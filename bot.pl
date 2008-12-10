@@ -145,7 +145,7 @@ sub on_public {
 					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
 					'yo no soy walter mercado, como putas voy a saber?');
 					## This might be go on the config file
-			    &say("$prob[ int rand @prob ]", $nick, $usenick);
+			    &say("$prob[ int rand @prob ]", $nick, $usenick) unless ($usenick eq 'no');
 			}
 		}
 		elsif ($msg =~ m/^definir/i) {
