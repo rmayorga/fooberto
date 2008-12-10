@@ -13,7 +13,6 @@ use Getopt::Std;
 our($opt_c);
 getopts('c:');
 # this is a config file
-
 # Load Config file
 my %bconf;
 my $cnfile;
@@ -26,23 +25,16 @@ use DBI;
 # database should como from the config file TODO
 my $dbh = DBI->connect("dbi:SQLite:dbname=$bconf{$bdbn}","","");
 
-#should go in the conffile too
-#my $logfile = "./foobot.log";
-
 my $logfile = $bconf{$lgfle};
 
-
-# Loading data from conf file.
+# ugly way to have the correct names, /me lazy
 my $bchan = "BOT.channel";
 my $buname = "BOT.username";
 my $bnick = "BOT.nickname";
 my $bcomm = "BOT.command";
 my $birname = "BOT.ircname";
 my $bserv = "BOT.server";
-#my $bnick = "$bconf{GENERAL.nick}";
-# $bchan = "$bconf{GENERAL.channel}";
-#$bnick = "$bconf{GENERAL.nick}";
-#open(LOG,">>$logfile") || die("This file will not open!");
+
 sub CHANNEL () { "$bconf{$bchan}" }
 
 my ($irc) = POE::Component::IRC->spawn();
@@ -56,8 +48,6 @@ POE::Session->create(
     },
 );
 
-# The bot session has started.  Register this bot with the "magnet"
-# IRC component.  Select a nickname.  Connect to a server.
 sub bot_start {
     my $kernel  = $_[KERNEL];
     my $heap    = $_[HEAP];
@@ -65,8 +55,7 @@ sub bot_start {
 
     $irc->yield( register => "all" );
 
-    #my $nick = 'usepoe' . $$ % 1000;
-# nick and alternative nick and params should go in a config file
+# TODO use alternative nicknames
 	$irc->yield( connect =>
           { Nick => "$bconf{$bnick}",
             Username => "$bconf{$buname}",
@@ -97,12 +86,13 @@ sub on_public {
 # catch users correcting words
     &correctuser($msg, $nick);
 
-#log at sqlite to (FIXME use the same chanlog function)
-    &dblog("$nick", "$msg");
-
 #ignoring un-polite-users
     my $ignore = &catchignore("$nick", "$msg");
     if (!$ignore) { $msg = '' }
+
+
+#log at sqlite to (FIXME use the same chanlog function)
+    &dblog("$nick", "$msg");
 
 # karma catcher
     &karmacatch($nick, $msg);
@@ -154,6 +144,7 @@ sub on_public {
 					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probale',
 					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
 					'yo no soy walter mercado, como putas voy a saber?');
+					## This might be go on the config file
 			    &say("$prob[ int rand @prob ]", $nick, $usenick);
 			}
 		}
@@ -187,8 +178,6 @@ sub on_public {
 			$msg =~ s/\ +//g;
 			my @seen = &dbuexist($msg);
 			if ($seen[0]) {
-			    #my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue $seen[1]";
-			    #&say($msout, $nick, $usenick);
 			    my $karma = &getkarma($msg);
 			    if ($karma < 0 ) {
 				    &say("ese tal $msg esta mal, $karma", $nick, $usenick);
@@ -291,10 +280,7 @@ sub on_public {
 				my @randmsg = ("según me comentaron", "en la calle escuche rumores que dicen que", 
 				"dicen las malas lenguas que",
 				"yo alguna vez escuche que", "a mi alguien me dijo que", "todos dicen que");
-				#my $randnum = int rand @randmsg;
-				#while ($randum > @randmsg) { $randnum = int rand @randmsg; }
 				&say("$randmsg[ int rand @randmsg ] $msg es $isfact", $nick, $usenick); 
-				#&say("$randmsg[$randnum] $msg es $isfact", $nick, $usenick); 
 
 		  	}	
 		}
@@ -340,8 +326,6 @@ sub checkignore {
 }
 
 
-# Random option is not working propertly 
-# FIXME
 sub actionlist {
 	my ($nick, $channel) = @_;; 
 	my $who = $nick; 
@@ -382,8 +366,6 @@ sub faction {
 	my $who = $action;
 	$who =~ s/^\w+ //;
 	$action =~ s/\ \w+.+//;
-	#&say("who = $who,  action = $action y el mensaje $msg", 'rmayorga', 'no');
-	#&doaction("$channel", "mira mal a $who");
 	my $sth=$dbh->prepare
 	   ("SELECT action from actions where id='$action'");
         $sth->execute();
@@ -479,7 +461,6 @@ sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
 	my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
 	$sth->execute();
-	# (nick, seen, last) VALUES ('$nick', datetime('now'), '$msg')");
 }
 
 sub fffact {
@@ -505,10 +486,6 @@ sub getkarma {
 	return $row;
 }
 
-
-
-#TODO fix this fucking karmacatch to deny that the same user gives karma to himself
-
 sub karmacatch {
 	my ($giver, $given) = @_;
 	my @k = ("$giver", ($given =~ m/(\+\+|--)/));
@@ -523,7 +500,6 @@ sub karmacatch {
 	         ("SELECT karma from users where NICK='$lucky'");
 	     $sth->execute();
 	     my $row = $sth->fetchrow;
-	     #if ($row[0] = 0) { $
 	     if ($k[1] eq '++') {
 		     $row++;
 	     } else {
@@ -542,7 +518,6 @@ sub dbuexist {
 	        $sth->execute();
 	        my @row = $sth->fetchrow_array;
 	        if ($row[0]) {
-		#&say("en dbuexist: $row[0]", $nick, "no");
 		    return @row;
 	        } else { return undef }
 	}
@@ -554,12 +529,9 @@ sub dblog {
 	my @seen = &dbuexist($nick); 
 	if ($seen[0]) {
 		$dbh->do("UPDATE users SET seen=datetime('now','localtime'), last='$msg' WHERE nick='$nick'");
-		#&say("UPDAE $nick, $msg", $nick, "no");
 	} else {
-		#FIXME bot never made any update on new users, or at least check if it is doing it
 		my $sth = $dbh->prepare("INSERT INTO users (nick, seen, last) VALUES ('$nick', datetime('now','localtime'), '$msg')");
 		$sth->execute();
-		#&say("INSERT $nick, $msg", $nick, "no");
 	}
 }
 
