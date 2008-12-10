@@ -7,14 +7,43 @@ use POE::Component::IRC;
 use Net::Google;
 use WWW::Wikipedia;
 use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
+use Config::Simple;
+use Getopt::Std;
+# Just one option at this momment
+our($opt_c);
+getopts('c:');
+# this is a config file
 
+# Load Config file
+my %bconf;
+my $cnfile;
+$cnfile = $opt_c || "/home/rmayorga/perl-foo/git-perl-bot/bot.conf";
+Config::Simple->import_from($cnfile, \%bconf);
+
+my $bdbn = "BOT.database";
+my $lgfle = "BOT.logfile";
 use DBI;
 # database should como from the config file TODO
-my $dbh = DBI->connect("dbi:SQLite:dbname=bot.db","","");
+my $dbh = DBI->connect("dbi:SQLite:dbname=$bconf{$bdbn}","","");
+
 #should go in the conffile too
-my $logfile = "./foobot.log";
+#my $logfile = "./foobot.log";
+
+my $logfile = $bconf{$lgfle};
+
+
+# Loading data from conf file.
+my $bchan = "BOT.channel";
+my $buname = "BOT.username";
+my $bnick = "BOT.nickname";
+my $bcomm = "BOT.command";
+my $birname = "BOT.ircname";
+my $bserv = "BOT.server";
+#my $bnick = "$bconf{GENERAL.nick}";
+# $bchan = "$bconf{GENERAL.channel}";
+#$bnick = "$bconf{GENERAL.nick}";
 #open(LOG,">>$logfile") || die("This file will not open!");
-sub CHANNEL () { "#rm-bot" }
+sub CHANNEL () { "$bconf{$bchan}" }
 
 my ($irc) = POE::Component::IRC->spawn();
 
@@ -39,10 +68,10 @@ sub bot_start {
     #my $nick = 'usepoe' . $$ % 1000;
 # nick and alternative nick and params should go in a config file
 	$irc->yield( connect =>
-          { Nick => 'foobot',
-            Username => 'foobot',
-            Ircname  => 'Fooberto',
-            Server   => 'localhost',
+          { Nick => "$bconf{$bnick}",
+            Username => "$bconf{$buname}",
+            Ircname  => "$bconf{$birname}",
+            Server   => "$bconf{$bserv}",
             Port     => '6667',
           }
     );
@@ -78,20 +107,17 @@ sub on_public {
 # karma catcher
     &karmacatch($nick, $msg);
     # capture command char (also this should go on the config file)
-    my $commandchar = "@";
-# not using ^^^^ yet should be, TODO
 
-    if ( ($msg =~ m/^@/) || ($msg =~ m/^foobot(,|;|:).+/ ) ) {
+    if ( ($msg =~ m/^$bconf{$bcomm}/) || ($msg =~ m/^$bconf{$bnick}(,|;|:).+/ ) ) {
 	#default'ing usenick, I know, is ugly FIXME
 	my $usenick = 'no';
-	$usenick = "yes" if $msg =~ m/^foobot(,|;|:).+/;
-	$msg =~ s/(^@|^foobot(,|;|:)\s+)//;
+	$usenick = "yes" if $msg =~ m/^$bconf{$bnick}(,|;|:).+/;
+	$msg =~ s/(^$bconf{$bcomm}|^$bconf{$bnick}(,|;|:)\s+)//;
 	# Commands come whit the 	
 	
 	for ($msg) {
 		#default ping command
 		if ($msg =~ m/^ping/i) {
-			#$irc->yield( privmsg => CHANNEL, "hola $nick");
 			&say("pong!", $nick, $usenick);
 		}
 		# fortune cookies
@@ -298,7 +324,7 @@ sub catchignore {
 	my ($nick, $msg) = @_;
 	my $command;
 	my $tmp= $msg;
-	if ( ($msg =~ m/^@/) || ($msg =~ m/^foobot(,|;|:).+/ ) ) {
+	if ( ($msg =~ m/^$bconf{$bcomm}/) || ($msg =~ m/^$bconf{$bnick}(,|;|:).+/ ) ) {
 		if (&checkignore($nick)) { $command = 1; }
 	}
 	if ($command) { return undef } else { return $msg }
