@@ -123,7 +123,11 @@ sub on_public {
 			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
 			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
 			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
-					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar');
+					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar', 'quizás', 'eso es obvio',
+					'no lo veo probable', 'el futuro es obscuro', 'eso es como que el PCN ganara las elecciones',
+					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probale',
+					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
+					'yo no soy walter mercado, como putas voy a saber?');
 			    &say("$prob[ int rand @prob ]", $nick, $usenick);
 			}
 		}
