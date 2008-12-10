@@ -275,7 +275,15 @@ sub on_public {
 			       &say("$msg: gay de $gayw", $nick, 'no');
 			   }
 			}
-		} else {  
+		}
+		elsif ($msg =~ s/^calendar//) {
+			$msg =~ s/^\ +//;
+			my $cnum = `calendar | wc -l`;
+			my $crand = int rand $cnum;
+			my $calen = `calendar | head -$crand  | tail -1`;
+			&say("$calen", $nick, $usenick);
+		}
+		else {  
 			$msg =~ s/^\ +//g;
 			my $isfact = &fffact("$msg");
 			my $action = $msg;
