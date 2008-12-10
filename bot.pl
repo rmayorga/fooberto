@@ -264,7 +264,17 @@ sub on_public {
 					## This might be go on the config file
 			    &say("$prob[ int rand @prob ]", $nick, $usenick) unless ($usenick eq 'no');
 			}
-
+		}
+		elsif ($msg =~ s/^saludar//) {
+			$msg =~ s/^\ +//;
+		   if (length($msg) >= 1) {
+			   if(&dbuexist($msg)) {
+			       my $num = `cat es-words | wc -l`;
+			       my $rand = int rand $num;
+			       my $gayw = `head -$rand es-words | tail -1`;
+			       &say("$msg: gay de $gayw", $nick, 'no');
+			   }
+			}
 		} else {  
 			$msg =~ s/^\ +//g;
 			my $isfact = &fffact("$msg");
