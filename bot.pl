@@ -243,6 +243,13 @@ sub on_public {
 				&say ($bug, $nick, $usenick) unless (!$bug);
 			}
 		}
+		elsif ($msg=~ s/^debian pack//) {
+			$msg =~ s/^\ //;
+			if (length($msg) >=1 ) {
+				my $pack = &querypack($msg);
+				&say ($pack, $nick, $usenick) unless (!$pack);
+			}
+		}
 		elsif ($msg =~ m/^quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
@@ -314,6 +321,30 @@ sub on_public {
     }
 
 }
+
+# TODO get rid of system commands and use perl
+sub querypack {
+	my $pack = shift;
+	my @dists = ("main-stable", "contrib-stable", "nonfree-stable",
+	             "main-testing", "contrib-testing", "nonfree-testing",
+		     "main-unstable", "contrib-unstable", "nonfree-unstable");
+	my ($stable, $testin, $unstable);
+	my $msgout;
+	my $version;
+	foreach (@dists) {
+		$version = `for i in \$(ls debian-packages/$_.gz) ; do zcat \$i | grep -A 6 "Package: $pack" | grep Version ; done`;
+		if ($version) {
+			chomp($version);
+			chomp($_);
+			$msgout .= " $_->$version";
+		}
+	}
+	return $msgout
+}
+
+
+
+
 
 sub querybug {
 	my $bug = shift;
