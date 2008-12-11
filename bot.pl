@@ -133,21 +133,6 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/^es probable/i) {
-		   $msg =~ s/^es probable//i;
-		   if (length($msg) >= 1) {
-			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
-			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
-			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
-					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar', 'quizás', 'eso es obvio',
-					'no lo veo probable', 'el futuro es obscuro', 'eso es como que el PCN ganara las elecciones',
-					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probale',
-					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
-					'yo no soy walter mercado, como putas voy a saber?');
-					## This might be go on the config file
-			    &say("$prob[ int rand @prob ]", $nick, $usenick);
-			}
-		}
 		elsif ($msg =~ m/^definir/i) {
 		   $msg =~ s/definir//i;
 		   if (length($msg) >= 1) {
@@ -265,6 +250,38 @@ sub on_public {
 				   &say("\"$randqu\"", $nick, $usenick);
 			   }
 		   }
+		}
+		elsif ($msg =~ s/\?$//) {
+		   if (length($msg) >= 1) {
+			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
+			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
+			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
+					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar', 'quizás', 'eso es obvio',
+					'no lo veo probable', 'el futuro es obscuro', 'eso es como que el PCN ganara las elecciones',
+					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probale',
+					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
+					'yo no soy walter mercado, como putas voy a saber?');
+					## This might be go on the config file
+			    &say("$prob[ int rand @prob ]", $nick, $usenick) unless ($usenick eq 'no');
+			}
+		}
+		elsif ($msg =~ s/^saludar//) {
+			$msg =~ s/^\ +//;
+		   if (length($msg) >= 1) {
+			   if(&dbuexist($msg)) {
+			       my $num = `cat es-words | wc -l`;
+			       my $rand = int rand $num;
+			       my $gayw = `head -$rand es-words | tail -1`;
+			       &say("$msg: gay de $gayw", $nick, 'no');
+			   }
+			}
+		}
+		elsif ($msg =~ s/^calendar//) {
+			$msg =~ s/^\ +//;
+			my $cnum = `calendar | wc -l`;
+			my $crand = int rand $cnum;
+			my $calen = `calendar | head -$crand  | tail -1`;
+			&say("$calen", $nick, $usenick);
 		}
 		else {  
 			$msg =~ s/^\ +//g;
