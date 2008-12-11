@@ -5,6 +5,8 @@ use integer;
 use POE;
 use POE::Component::IRC;
 use Net::Google;
+use SOAP::Lite;
+
 use WWW::Wikipedia;
 use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
 use Config::Simple;
@@ -234,6 +236,13 @@ sub on_public {
 			}
 
 		}
+		elsif ($msg=~ s/^debian bug//) {
+			$msg =~ s/^\ //;
+			if (length($msg) >=1 ) {
+				my $bug = &querybug($msg);
+				&say ($bug, $nick, $usenick) unless (!$bug);
+			}
+		}
 		elsif ($msg =~ m/^quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
@@ -303,6 +312,19 @@ sub on_public {
 		}
 	}
     }
+
+}
+
+sub querybug {
+	my $bug = shift;
+	my $soap = SOAP::Lite->uri('Debbugs/SOAP')->proxy('http://bugs.debian.org/cgi-bin/soap.cgi');
+	my $refbug = $soap->get_status($bug)->result->{$bug};
+	my $msgout;
+	if ($refbug->{id}) {
+		$msgout = "paquete: $refbug->{package}, bug: $refbug->{subject}, severidad: $refbug->{severity}, url: http://bugs.debian.org/$bug";
+		$msgout .= " resuelto por: $refbug->{done}" unless (!$refbug->{done});
+		return $msgout;
+	} else { return undef}
 
 }
 
