@@ -474,7 +474,7 @@ sub authen {
 sub correctuser {
 # Add a check if the user exists even if try to use the regexp->FIXME
 	my ($msg, $nick) = @_;
-	if ($msg =~ m/s\/.+\/$/) {
+	if ($msg =~ m/^s\/.+\/$/) {
 	    my $sth = $dbh->prepare
 	        ("SELECT last from users where nick='$nick'");
 	    $sth->execute();
