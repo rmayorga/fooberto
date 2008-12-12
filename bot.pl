@@ -281,7 +281,7 @@ sub on_public {
 			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
 					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar', 'quizás', 'eso es obvio',
 					'no lo veo probable', 'el futuro es obscuro', 'eso es como que el PCN ganara las elecciones',
-					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probale',
+					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probable',
 					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
 					'yo no soy walter mercado, como putas voy a saber?');
 					## This might be go on the config file
