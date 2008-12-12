@@ -250,6 +250,13 @@ sub on_public {
 				&say ($pack, $nick, $usenick) unless (!$pack);
 			}
 		}
+		elsif ($msg=~ s/^debian paquete//) {
+			$msg =~ s/^\ //;
+			if (length($msg) >=1 ) {
+				my $pack = &searchpack($msg);
+				&say ($pack, $nick, $usenick) unless (!$pack);
+			}
+		}
 		elsif ($msg =~ m/^quote/i) {
 		   $msg =~ s/quote//i;
 		   $msg =~ s/^\ +//g;
@@ -321,6 +328,28 @@ sub on_public {
     }
 
 }
+# TODO get rid of system commands and use perl
+sub searchpack {
+	my $pack = shift;
+	my $dist = $pack;
+	my $packs;
+	my $msgout;
+	if ($pack =~ m/(^stable)|(^testing)|(^unstable)/) {
+		$dist =~ s/\ \w.+//;
+		$pack =~ s/^.+\ //;
+		foreach (`for i in \$(ls debian-packages/*-$dist.gz) ; do zcat \$i | grep "Package: $pack" ; done`) {
+			chomp($_);
+			$packs .= $_;
+		}
+	}
+	if(!$packs) { return undef }
+	$packs =~ s/Package://g;
+	$packs =~ s/^\ +//;
+	if ($packs eq $pack) { $msgout = "El paquete existe y se llama tal como lo escribiste" }
+	else { $msgout = "podría ser: ". substr($packs, 0, 70) . " ...?"; }
+	return $msgout;
+
+}
 
 # TODO get rid of system commands and use perl
 sub querypack {
@@ -328,7 +357,6 @@ sub querypack {
 	my @dists = ("main-stable", "contrib-stable", "nonfree-stable",
 	             "main-testing", "contrib-testing", "nonfree-testing",
 		     "main-unstable", "contrib-unstable", "nonfree-unstable");
-	my ($stable, $testin, $unstable);
 	my $msgout;
 	my $version;
 	foreach (@dists) {
