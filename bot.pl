@@ -441,7 +441,7 @@ sub faction {
         $sth->execute();
 	my $row = $sth->fetchrow;
 	if ($row) {
-		if ($msg!~m/\w+ \w+./) { 
+		if (($msg!~m/\w+ \w+./) | ($msg=~m/$bconf{$bnick}/))  { 
 			$row =~ s/NICK/$nick/;
 			&doaction("$channel", "$row POR MAJE!");
 			return undef
