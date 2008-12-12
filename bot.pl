@@ -247,7 +247,7 @@ sub on_public {
 				&say ($bug, $nick, $usenick) unless (!$bug);
 			}
 		}
-		elsif ($msg=~ s/^debian pack//) {
+		elsif ($msg=~ s/^debian version//) {
 			$msg =~ s/^\ //;
 			if (length($msg) >=1 ) {
 				my $pack = &querypack($msg);
@@ -333,7 +333,8 @@ sub searchpack {
 	if ($pack =~ m/(^stable)|(^testing)|(^unstable)/) {
 		$dist =~ s/\ \w.+//;
 		$pack =~ s/^.+\ //;
-		foreach (`for i in \$(ls debian-packages/*-$dist.gz) ; do zcat \$i | grep "Package: $pack" ; done`) {
+
+		foreach (`for i in \$(ls debian-packages/*-$dist.gz) ; do zcat \$i | grep "Package: .*$pack*" ; done`) {
 			chomp($_);
 			$packs .= $_;
 		}
