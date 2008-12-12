@@ -18,7 +18,7 @@ getopts('c:');
 # Load Config file
 my %bconf;
 my $cnfile;
-$cnfile = $opt_c || "/home/rmayorga/perl-foo/git-perl-bot/bot.conf";
+$cnfile = $opt_c || "bot.conf";
 Config::Simple->import_from($cnfile, \%bconf);
 
 my $bdbn = "BOT.database";
@@ -37,6 +37,10 @@ my $bcomm = "BOT.command";
 my $birname = "BOT.ircname";
 my $bserv = "BOT.server";
 
+## other ugly option
+my $probab = "RESPONSES.probable";
+
+
 sub CHANNEL () { "$bconf{$bchan}" }
 
 my ($irc) = POE::Component::IRC->spawn();
@@ -50,7 +54,7 @@ POE::Session->create(
     },
 );
 
-sub bot_start {
+sub bot_start{
     my $kernel  = $_[KERNEL];
     my $heap    = $_[HEAP];
     my $session = $_[SESSION];
@@ -276,15 +280,10 @@ sub on_public {
 		}
 		elsif ($msg =~ s/\?$//) {
 		   if (length($msg) >= 1) {
-			    my @prob = ('sí', 'NO', 'para nada', 'eso es imposible', '¡ni a pija!', 'hmmm, creo que no', 
-			    		'Seguro que si', 'a ver, jupiter esta en sagitario..., SI, seguro', 
-			    		'¿Qué?, vos pensas que los pajaritos vuelan por que tienen motor en el...', 
-					'Ciertamente', 'ni idea', 'hmm, no puedo adivinar', 'quizás', 'eso es obvio',
-					'no lo veo probable', 'el futuro es obscuro', 'eso es como que el PCN ganara las elecciones',
-					'vos lo sabes mejor que yo', '*NO*', '*SI*', 'Pero ni en tus sueños más humedos', 'es probable',
-					'a ver... hmmm, si :)', 'aunque lo supiera no te respondiera', '¡claro que sí!', 'preguntale a walter mercado',
-					'yo no soy walter mercado, como putas voy a saber?');
-					## This might be go on the config file
+				##putting all the probabilities in the config file
+			    my @probability ="$bconf{$probab}"; 
+			    my @prob = split(",",$probability[0]);
+			    ## This might be go on the config file
 			    &say("$prob[ int rand @prob ]", $nick, $usenick) unless ($usenick eq 'no');
 			}
 		}
@@ -316,7 +315,7 @@ sub on_public {
 				#$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
 			} elsif ($isaction) {
 				# action commands here
-			} else {
+			} else { ##put all these in the config file TODO
 				my @randmsg = ("según me comentaron", "en la calle escuche rumores que dicen que", 
 				"dicen las malas lenguas que",
 				"yo alguna vez escuche que", "a mi alguien me dijo que", "todos dicen que");
@@ -353,7 +352,7 @@ sub searchpack {
 
 # TODO get rid of system commands and use perl
 sub querypack {
-	my $pack = shift;
+	my $pack = shift; ##Put all these in config file TODO
 	my @dists = ("main-stable", "contrib-stable", "nonfree-stable",
 	             "main-testing", "contrib-testing", "nonfree-testing",
 		     "main-unstable", "contrib-unstable", "nonfree-unstable");
