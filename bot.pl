@@ -40,6 +40,7 @@ my $bserv = "BOT.server";
 ## other ugly option
 my $probab = "RESPONSES.probable";
 my $factran = "RESPONSES.facts";
+my $debbranch = "DEBIAN.branches";
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -280,6 +281,7 @@ sub on_public {
 		}
 		elsif ($msg =~ s/\?$//) {
 		   if (length($msg) >= 1) {
+			##probabilities reached from conf_file
 			    my @probability ="$bconf{$probab}"; 
 			    my @prob = split("//",$probability[0]);
 			    &say($prob[ int rand @prob ], $nick, $usenick) unless ($usenick eq 'no');
@@ -350,9 +352,9 @@ sub searchpack {
 # TODO get rid of system commands and use perl
 sub querypack {
 	my $pack = shift; ##Put all these in config file TODO
-	my @dists = ("main-stable", "contrib-stable", "nonfree-stable",
-	             "main-testing", "contrib-testing", "nonfree-testing",
-		     "main-unstable", "contrib-unstable", "nonfree-unstable");
+	my @distbranch = "$bconf{$debbranch}";
+	my @dists = split("//",$distbranch[0]);
+	print @dists;
 	my $msgout;
 	my $version;
 	foreach (@dists) {
