@@ -307,6 +307,7 @@ sub on_public {
 		}
 		else {  
 			$msg =~ s/^\ +//g;
+			$msg =~ s/\'//g;
 			my $isfact = &fffact("$msg");
 			my $action = $msg;
 			my $isaction = &faction($nick, $channel, "$action");
