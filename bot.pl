@@ -39,7 +39,7 @@ my $bserv = "BOT.server";
 
 ## other ugly option
 my $probab = "RESPONSES.probable";
-
+my $factran = "RESPONSES.facts";
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -280,10 +280,8 @@ sub on_public {
 		}
 		elsif ($msg =~ s/\?$//) {
 		   if (length($msg) >= 1) {
-			    ##putting all the probabilities in the config file
 			    my @probability ="$bconf{$probab}"; 
 			    my @prob = split("//",$probability[0]);
-			    ## This might be go on the config file
 			    &say($prob[ int rand @prob ], $nick, $usenick) unless ($usenick eq 'no');
 			}
 		}
@@ -313,14 +311,12 @@ sub on_public {
 			my $isaction = &faction($nick, $channel, "$action");
 			if (!$isfact) {
 				my $foo = 'no';
-				#$irc->yield( privmsg => CHANNEL, "$msg.- comando no existe"); 
 			} elsif ($isaction) {
 				# action commands here
-			} else { ##put all these in the config file TODO
-				my @randmsg = ("según me comentaron", "en la calle escuche rumores que dicen que", 
-				"dicen las malas lenguas que",
-				"yo alguna vez escuche que", "a mi alguien me dijo que", "todos dicen que");
-				&say("$randmsg[ int rand @randmsg ] $msg es $isfact", $nick, $usenick); 
+			} else {
+				my @probability ="$bconf{$factran}";
+				my @prob = split("//",$probability[0]);
+				&say("$prob[ int rand @prob ] $msg es $isfact", $nick, $usenick);
 
 		  	}	
 		}
