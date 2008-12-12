@@ -280,11 +280,11 @@ sub on_public {
 		}
 		elsif ($msg =~ s/\?$//) {
 		   if (length($msg) >= 1) {
-				##putting all the probabilities in the config file
+			    ##putting all the probabilities in the config file
 			    my @probability ="$bconf{$probab}"; 
-			    my @prob = split(",",$probability[0]);
+			    my @prob = split("//",$probability[0]);
 			    ## This might be go on the config file
-			    &say("$prob[ int rand @prob ]", $nick, $usenick) unless ($usenick eq 'no');
+			    &say($prob[ int rand @prob ], $nick, $usenick) unless ($usenick eq 'no');
 			}
 		}
 		elsif ($msg =~ s/^saludar//) {
