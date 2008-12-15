@@ -124,10 +124,10 @@ sub on_public {
 			&say($out, $nick, $usenick);
 		   }
 		}
-		elsif ($msg =~ m/^decifrar/i) {
-		   $msg =~ s/decifrar//i;
+		elsif ($msg =~ m/^descifrar/i) {
+		   $msg =~ s/descifrar//i;
 		   if (length($msg) >= 1) {
-		        my $out = &decifrar($msg);
+		        my $out = &descifrar($msg);
 			if ($out) {
 			    &say($out, $nick, $usenick);
 			} else {
@@ -594,7 +594,7 @@ sub definir {
 	   return "$out...";
 	}
 }
-sub decifrar {
+sub descifrar {
 	my $search = shift;
 	my $goo = Net::Google->new(key=>LOCAL_GOOGLE_KEY);
 	my $word = $goo->spelling(phrase=>$search)->suggest();
