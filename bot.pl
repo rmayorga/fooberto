@@ -157,7 +157,7 @@ sub on_public {
 			$msg =~ s/\ +//g;
 			my @seen = &dbuexist($msg);
 			if ($seen[0]) {
-			    my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue $seen[1]";
+			    my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue «$seen[1]»";
 			    &say($msout, $nick, $usenick);
 			} else {
 			   &say("ese ser mitologico núnca entro a este antro de perdición", $nick, $usenick);
