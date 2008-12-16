@@ -141,10 +141,6 @@ sub on_public {
 		   if (length($msg) >= 1) {
 		        my $out = &definir($msg);
 			if ($out) {
-			    if ($out =~m/^#REDIRECT/) {
-				    $out =~s/(#REDIRECT)|(\ \.\.\.)//g;
-				    $out = &definir($out);
-			    }
 			    &say("$out", $nick, $usenick);
 			} else {
 			   &say("err, no encontre $msg", $nick, $usenick);
