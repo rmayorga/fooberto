@@ -6,7 +6,7 @@ use POE;
 use POE::Component::IRC;
 use Net::Google;
 use SOAP::Lite;
-
+use utf8;
 use WWW::Wikipedia;
 use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
 use Config::Simple;
@@ -142,6 +142,9 @@ sub on_public {
 		   if (length($msg) >= 1) {
 		        my $out = &definir($msg);
 			if ($out) {
+			    if ($out =~s/(#REDIRECT)|(\ \.\.\.)//g) {
+				    $out = &definir($out);
+			    }
 			    &say($out, $nick, $usenick);
 			} else {
 			   &say("err, no encontre $msg", $nick, $usenick);
@@ -626,7 +629,9 @@ sub definir {
 	my $word = shift;
 	my $wiki = WWW::Wikipedia->new();
 	$wiki->language( 'es' );
-	my $result = $wiki->search ($word) ;
+	$wiki->follow_redirects('on');
+	utf8::decode($word);
+	my $result = $wiki->search ("$word") ;
 	my $out; 
 	if ($result) {
 	   if ($result->text()){
@@ -638,6 +643,7 @@ sub definir {
 	   $out =~ s/\[\[.+\]\]//gi;
 	   $out =~ s/(.*?).\]\]//g;
 	   $out = substr($out, 0, 199);
+	   utf8::decode($out); 
 	   return "$out...";
 	}
 }
