@@ -299,6 +299,14 @@ sub on_public {
 			my $calen = `calendar | head -$crand  | tail -1`;
 			&say("$calen", $nick, $usenick, $priv);
 		}
+		elsif ($msg =~ s/^decirle a//) {
+			$msg =~ s/^\ +//;
+			my $target = $msg;
+			my $about = $msg;
+			$target =~ s/\ \w.+//;
+			$about =~ s/^\w\ //;
+			&sayto($target, $msg); 
+		}
 		else {  
 			$msg =~ s/^\ +//g;
 			$msg =~ s/\'//g;
@@ -320,6 +328,18 @@ sub on_public {
     }
 
 }
+
+sub sayto {
+	my ($nick, $about) =@_;
+	my $msg = &fffact($about); 
+	&say ("nick =$nick, about =$about, mensaje =$msg", $nick, 'no', 'no');
+	if ($msg) {
+		my @probability ="$bconf{$factran}";
+		my @prob = split("//",$probability[0]);
+		&say("$prob[ int rand @prob ] $about es $msg", $nick, 'no', 'yes');
+	} else { return undef }
+}
+
 # TODO get rid of system commands and use perl
 sub searchpack {
 	my $pack = shift;
