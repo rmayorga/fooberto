@@ -299,13 +299,16 @@ sub on_public {
 			my $calen = `calendar | head -$crand  | tail -1`;
 			&say("$calen", $nick, $usenick, $priv);
 		}
-		elsif ($msg =~ s/^decirle a//) {
+		elsif ($msg =~ m/contarle\ a\ \w.+ acerca\ de/) {
+			$msg =~ s/contarle\ a\ //;
+			$msg =~ s/acerca\ de//;
 			$msg =~ s/^\ +//;
 			my $target = $msg;
 			my $about = $msg;
 			$target =~ s/\ \w.+//;
-			$about =~ s/^\w\ //;
-			&sayto($target, $msg); 
+			$target =~ s/\ +$//;
+			$about =~ s/^$target\ +//;
+			&sayto($target, $about); 
 		}
 		else {  
 			$msg =~ s/^\ +//g;
@@ -331,8 +334,7 @@ sub on_public {
 
 sub sayto {
 	my ($nick, $about) =@_;
-	my $msg = &fffact($about); 
-	&say ("nick =$nick, about =$about, mensaje =$msg", $nick, 'no', 'no');
+	my $msg = &fffact("$about"); 
 	if ($msg) {
 		my @probability ="$bconf{$factran}";
 		my @prob = split("//",$probability[0]);
