@@ -10,6 +10,7 @@ use WWW::Wikipedia;
 use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
 use Config::Simple;
 use Getopt::Std;
+use utf8;
 # Just one option at this momment
 our($opt_c);
 getopts('c:');
@@ -368,7 +369,7 @@ sub searchpack {
 
 # TODO get rid of system commands and use perl
 sub querypack {
-	my $pack = shift; ##Put all these in config file TODO
+	my $pack = shift; 
 	my @distbranch = "$bconf{$debbranch}";
 	my @dists = split("//",$distbranch[0]);
 	print @dists;
@@ -653,6 +654,7 @@ sub definir {
 #TODO this have some problems when the word has UTF-8 chars, like 'ratón'
 	my $word = shift;
 	my $wiki = WWW::Wikipedia->new();
+	utf8::decode($word);		
 	$wiki->language( 'es' );
 	$wiki->follow_redirects('on');
 	my $result = $wiki->search ("$word") ;
@@ -668,7 +670,7 @@ sub definir {
 	   #$out =~ s/(.*?).\]\]//g;
 	   #$out = substr($out, 0, 199);
 	   #### ^^^^^ those works
-	   
+	   utf8::decode($out);
 	   $out =~  s/\n+/ /g; #remove all newlines and use spaces
 	   $out =~ s/\{.+.\}|<!.+->//g; # remove html comments and wiki markdown
 	   $out =~ s/<ref.+>(.*?)<\/ref>//g; # reftag
@@ -677,12 +679,11 @@ sub definir {
 	   $out =~ s/<sub>([0-9]{1,})<\/sub>//g;  # subs that come mostly like numbers
 	   $out =~ s/\[\[.+\]\]//gi; #more wiki markdown
 	   $out =~ s/(.*?).\]\]//g; #wiki stuffs
-           $out = substr($out, 0, 199);
-
-
-
-	   return "$out...";
-	}
+	   $out = substr($out, 0, 199);	
+  	     return "$out...";
+	
+	
+	  } 
 }
 sub descifrar {
 	my $search = shift;
