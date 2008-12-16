@@ -90,6 +90,8 @@ sub on_public {
 #chanlog
     &chanlog(" [$ts] <$nick:$channel> $msg");
 # catch users correcting words
+# FIXME a user can not  correct himself in a priv channel, and
+# is worst if the floods comes to the main channel
     &correctuser($msg, $nick);
 
 #ignoring un-polite-users
@@ -104,9 +106,11 @@ sub on_public {
     &karmacatch($nick, $msg);
     # capture command char (also this should go on the config file)
 
-    if ( ($msg =~ m/^$bconf{$bcomm}/) || ($msg =~ m/^$bconf{$bnick}(,|;|:).+/ ) ) {
+    if ( ($msg =~ m/^$bconf{$bcomm}/) || ($msg =~ m/^$bconf{$bnick}(,|;|:).+/ ) || ($channel eq $bconf{$bnick}) ) {
 	#default'ing usenick, I know, is ugly FIXME
 	my $usenick = 'no';
+	my $priv = 'no';
+	$priv =  "yes" if $channel eq $bconf{$bnick};
 	$usenick = "yes" if $msg =~ m/^$bconf{$bnick}(,|;|:).+/;
 	$msg =~ s/(^$bconf{$bcomm}|^$bconf{$bnick}(,|;|:)\s+)//;
 	
@@ -114,26 +118,26 @@ sub on_public {
 	for ($msg) {
 		#default ping command
 		if ($msg =~ m/^ping/i) {
-			&say("pong!", $nick, $usenick);
+			&say("pong!", $nick, $usenick, $priv);
 		}
 		# fortune cookies
 		elsif ($msg =~ m/^fortune/i) {
 		    my $out = &fortune();
-		    &say($out, $nick, $usenick);
+		    &say($out, $nick, $usenick, $priv);
 		}
 		elsif ($msg =~ s/^google//i) {
 		   if (length($msg) >= 1) {
 		        my $out = &google($msg);
-			&say($out, $nick, $usenick);
+			&say($out, $nick, $usenick, $priv);
 		   }
 		}
 		elsif ($msg =~ s/^descifrar//) {
 		   if (length($msg) >= 1) {
 		        my $out = &descifrar($msg);
 			if ($out) {
-			    &say($out, $nick, $usenick);
+			    &say($out, $nick, $usenick, $priv);
 			} else {
-			   &say("no soy perfecto, pero creo que $msg esta bien", $nick, $usenick);
+			   &say("no soy perfecto, pero creo que $msg esta bien", $nick, $usenick, $priv);
 			}
 		   }
 		}
@@ -141,9 +145,9 @@ sub on_public {
 		   if (length($msg) >= 1) {
 		        my $out = &definir($msg);
 			if ($out) {
-			    &say("$out", $nick, $usenick);
+			    &say("$out", $nick, $usenick, $priv);
 			} else {
-			   &say("err, no encontre $msg", $nick, $usenick);
+			   &say("err, no encontre $msg", $nick, $usenick, $priv);
 			}
 		   }
 		}
@@ -153,9 +157,9 @@ sub on_public {
 			my @seen = &dbuexist($msg);
 			if ($seen[0]) {
 			    my $msout = "Parece que $msg, andaba aquí el $seen[0], lo último que salio de su teclado fue «$seen[1]»";
-			    &say($msout, $nick, $usenick);
+			    &say($msout, $nick, $usenick, $priv);
 			} else {
-			   &say("ese ser mitologico núnca entro a este antro de perdición", $nick, $usenick);
+			   &say("ese ser mitologico núnca entro a este antro de perdición", $nick, $usenick, $priv);
 			}
 		   }
 		}
@@ -166,10 +170,10 @@ sub on_public {
 			if ($seen[0]) {
 			    my $karma = &getkarma($msg);
 			    if ($karma < 0 ) {
-				    &say("ese tal $msg esta mal, $karma", $nick, $usenick);
+				    &say("ese tal $msg esta mal, $karma", $nick, $usenick, $priv);
 			    } elsif ( $karma > 0) { 
-				    &say("parece que $msg se porta bien, $karma", $nick, $usenick);
-			    } elsif ( $karma == 0 ) { &say("creo que $msg es _neutral_ , $karma", $nick, $usenick); }
+				    &say("parece que $msg se porta bien, $karma", $nick, $usenick, $priv);
+			    } elsif ( $karma == 0 ) { &say("creo que $msg es _neutral_ , $karma", $nick, $usenick, $priv); }
 			} 
 		   }
 		}
@@ -236,21 +240,21 @@ sub on_public {
 			$msg =~ s/^\ //;
 			if (length($msg) >=1 ) {
 				my $bug = &querybug($msg);
-				&say ($bug, $nick, $usenick) unless (!$bug);
+				&say ($bug, $nick, $usenick, $priv) unless (!$bug);
 			}
 		}
 		elsif ($msg=~ s/^debian version//) {
 			$msg =~ s/^\ //;
 			if (length($msg) >=1 ) {
 				my $pack = &querypack($msg);
-				&say ($pack, $nick, $usenick) unless (!$pack);
+				&say ($pack, $nick, $usenick, $priv) unless (!$pack);
 			}
 		}
 		elsif ($msg=~ s/^debian paquete//) {
 			$msg =~ s/^\ //;
 			if (length($msg) >=1 ) {
 				my $pack = &searchpack($msg);
-				&say ($pack, $nick, $usenick) unless (!$pack);
+				&say ($pack, $nick, $usenick, $priv) unless (!$pack);
 			}
 		}
 		elsif ($msg =~ s/^quote//) {
@@ -263,7 +267,7 @@ sub on_public {
 				   }
 			   } elsif ($msg =~ s/^random//) {
 				   my $randqu = &quotegetrand();
-				   &say("\" $randqu \"", $nick, $usenick);
+				   &say("\" $randqu \"", $nick, $usenick, $priv);
 			   }
 		   }
 		}
@@ -272,7 +276,7 @@ sub on_public {
 			##probabilities reached from conf_file
 			    my @probability ="$bconf{$probab}"; 
 			    my @prob = split("//",$probability[0]);
-			    &say($prob[ int rand @prob ], $nick, $usenick) unless ($usenick eq 'no');
+			    &say($prob[ int rand @prob ], $nick, $usenick, $priv) unless ($usenick eq 'no');
 			}
 		}
 		elsif ($msg =~ s/^saludar//) {
@@ -282,7 +286,7 @@ sub on_public {
 			       my $num = `cat es-words | wc -l`;
 			       my $rand = int rand $num;
 			       my $gayw = `head -$rand es-words | tail -1`;
-			       &say("$msg: gay de $gayw", $nick, 'no');
+			       &say("$msg: gay de $gayw", $nick, 'no', $priv);
 			   }
 			}
 		}
@@ -291,7 +295,7 @@ sub on_public {
 			my $cnum = `calendar | wc -l`;
 			my $crand = int rand $cnum;
 			my $calen = `calendar | head -$crand  | tail -1`;
-			&say("$calen", $nick, $usenick);
+			&say("$calen", $nick, $usenick, $priv);
 		}
 		else {  
 			$msg =~ s/^\ +//g;
@@ -306,7 +310,7 @@ sub on_public {
 			} else {
 				my @probability ="$bconf{$factran}";
 				my @prob = split("//",$probability[0]);
-				&say("$prob[ int rand @prob ] $msg es $isfact", $nick, $usenick);
+				&say("$prob[ int rand @prob ] $msg es $isfact", $nick, $usenick, $priv);
 
 		  	}	
 		}
@@ -426,7 +430,7 @@ sub actionlist {
 	for (1..$rnum) {
 		push (@rest , $sth->fetchrow);
 	}
-	&say ("@rest", "$nick", "no") unless $channel; 
+	&say ("@rest", "$nick", "no", "no") unless $channel; 
 	if ($channel) {
 		$nick =~ s/^\ //;
 		&faction("$nick", $channel, "$rest[int rand @rest] $nick");
@@ -528,7 +532,7 @@ sub correctuser {
 	    $msg =~ s/^s//;
 	    my @chan = split(/\//, $msg);
 	    $rowi =~ s/$chan[1]/$chan[2]/g;
-	    &say("$nick en realidad quería decir \"$rowi\"", $nick, "no");
+	    &say("$nick en realidad quería decir \"$rowi\"", $nick, "no", "no");
       }
 }
 
@@ -682,11 +686,13 @@ sub fortune {
 }
 
 sub say {
-	my ($msg, $nick, $usenick ) = @_;
+	my ($msg, $nick, $usenick, $priv ) = @_;
+	my $channel = $bconf{$bchan};
+	$channel = "$nick" if $priv eq 'yes';
 	if ($usenick eq 'yes') {
-		$irc->yield( privmsg => CHANNEL, "$nick: $msg");
+		$irc->yield( privmsg => $channel, "$nick: $msg");
 	} else {
-		$irc->yield( privmsg => CHANNEL, "$msg");
+		$irc->yield( privmsg => $channel, "$msg");
 	}
 	return
 }
