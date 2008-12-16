@@ -632,12 +632,26 @@ sub definir {
 	   if ($result->text()){
 		$out = $result->text();
 	   } else { return }
-	   $out =~ s/\n+/ /g;
-	   $out =~ s/\{.+.\}|<!.+->//g;
-	   $out =~ s/<ref>(.*?)<\/ref>//g;
-	   $out =~ s/\[\[.+\]\]//gi;
-	   $out =~ s/(.*?).\]\]//g;
-	   $out = substr($out, 0, 199);
+	   #$out =~ s/\n+/ /g;
+	   #$out =~ s/\{.+.\}|<!.+->//g;
+	   #$out =~ s/<ref>(.*?)<\/ref>//g;
+	   #$out =~ s/\[\[.+\]\]//gi;
+	   #$out =~ s/(.*?).\]\]//g;
+	   #$out = substr($out, 0, 199);
+	   #### ^^^^^ those works
+	   
+	   $out =~  s/\n+/ /g; #remove all newlines and use spaces
+	   $out =~ s/\{.+.\}|<!.+->//g; # remove html comments and wiki markdown
+	   $out =~ s/<ref.+>(.*?)<\/ref>//g; # reftag
+	   $out =~ s/<ref>(.*?)<\/ref>//g; # reftag
+	   $out =~ s/<\w>(.{1,})<\/\w>//g; #html tags
+	   $out =~ s/<sub>([0-9]{1,})<\/sub>//g;  # subs that come mostly like numbers
+	   $out =~ s/\[\[.+\]\]//gi; #more wiki markdown
+	   $out =~ s/(.*?).\]\]//g; #wiki stuffs
+           $out = substr($out, 0, 199);
+
+
+
 	   return "$out...";
 	}
 }
