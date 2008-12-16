@@ -206,6 +206,8 @@ sub on_public {
 		   $msg =~ s/\ +//g;
 		   if (length($msg) >= 1) {
 			   my $ok = &authen($nick, "$msg");
+			   if ($ok) { &say ("password ok", $nick, $usenick, $priv); }
+			   else { &say("errr, password equivocado", $nick, $usenick, $priv); }
 		   }
 		}
 		elsif ($msg =~ s/^action//) {
@@ -515,7 +517,8 @@ sub authen {
 	if ($dbpass) {
 		if ($dbpass eq $gpass) {
 			$dbh->do("UPDATE users SET perm='aut' WHERE nick='$nick'");
-		}
+			return "ok"; 
+		} else { return undef }
 	}
 }
 
