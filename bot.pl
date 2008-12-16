@@ -110,7 +110,7 @@ sub on_public {
 	my $usenick = 'no';
 	$usenick = "yes" if $msg =~ m/^$bconf{$bnick}(,|;|:).+/;
 	$msg =~ s/(^$bconf{$bcomm}|^$bconf{$bnick}(,|;|:)\s+)//;
-	# Commands come whit the 	
+	
 	
 	for ($msg) {
 		#default ping command
@@ -122,15 +122,13 @@ sub on_public {
 		    my $out = &fortune();
 		    &say($out, $nick, $usenick);
 		}
-		elsif ($msg =~ m/^google/i) {
-		   $msg =~ s/google//i;
+		elsif ($msg =~ s/^google//i) {
 		   if (length($msg) >= 1) {
 		        my $out = &google($msg);
 			&say($out, $nick, $usenick);
 		   }
 		}
-		elsif ($msg =~ m/^descifrar/i) {
-		   $msg =~ s/descifrar//i;
+		elsif ($msg =~ s/^descifrar//) {
 		   if (length($msg) >= 1) {
 		        my $out = &descifrar($msg);
 			if ($out) {
@@ -140,8 +138,7 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/^definir/i) {
-		   $msg =~ s/definir//i;
+		elsif ($msg =~ s/^definir//) {
 		   if (length($msg) >= 1) {
 		        my $out = &definir($msg);
 			if ($out) {
@@ -151,8 +148,7 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/^visto/i) {
-		   $msg =~ s/visto//i;
+		elsif ($msg =~ s/^visto//) {
 		   if (length($msg) >= 1) {
 			$msg =~ s/\ +//g;
 			my @seen = &dbuexist($msg);
@@ -164,8 +160,7 @@ sub on_public {
 			}
 		   }
 		}
-		elsif ($msg =~ m/^karma/i) {
-		   $msg =~ s/karma//i;
+		elsif ($msg =~ s/^karma//) {
 		   if (length($msg) >= 1) {
 			$msg =~ s/\ +//g;
 			my @seen = &dbuexist($msg);
@@ -195,8 +190,7 @@ sub on_public {
 		    } 
 		   
 		}
-		elsif ($msg =~ m/^olvidar/i) {
-		   $msg =~ s/olvidar//i;
+		elsif ($msg =~ s/^olvidar//) {
 		   $msg =~ s/\ +//g;
 		   if (length($msg) >= 1) {
 			   my $isfact = &fffact("$msg");
@@ -205,16 +199,14 @@ sub on_public {
 			   }
 		   }
 		}
-		elsif ($msg =~ m/^identify/i) {
-		   $msg =~ s/identify//i;
+		elsif ($msg =~ s/^identify//) {
 		   $msg =~ s/\ +//g;
 		   if (length($msg) >= 1) {
 			   my $ok = &authen($nick, "$msg");
 		   }
 		}
-		elsif ($msg =~ m/^action/i) {
+		elsif ($msg =~ s/^action//) {
 		   my $add;
-		   $msg =~ s/^action//i;
 		   $msg =~ s/^\ +//g;
 		   if ($msg =~m/list/) { &actionlist($nick); $add = 'no'; }
 		   if ($msg =~s/^random//) { &actionlist($msg, $channel); $add = 'no'; } 
@@ -262,20 +254,17 @@ sub on_public {
 				&say ($pack, $nick, $usenick) unless (!$pack);
 			}
 		}
-		elsif ($msg =~ m/^quote/i) {
-		   $msg =~ s/quote//i;
+		elsif ($msg =~ s/^quote//) {
 		   $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
 			   my $check = &checkauth($nick);
-			   if ($msg =~ m/^add/) {
+			   if ($msg =~ s/^add//) {
 				   if ($check) {
-					   $msg =~ s/^add//;
 					   &quoteadd("$msg", $nick);
 				   }
-			   } elsif ($msg =~ m/^random/) {
-				   $msg =~ s/^random//;
+			   } elsif ($msg =~ s/^random//) {
 				   my $randqu = &quotegetrand();
-				   &say("\"$randqu\"", $nick, $usenick);
+				   &say("\" $randqu \"", $nick, $usenick);
 			   }
 		   }
 		}
