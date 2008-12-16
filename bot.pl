@@ -630,7 +630,6 @@ sub definir {
 	my $wiki = WWW::Wikipedia->new();
 	$wiki->language( 'es' );
 	$wiki->follow_redirects('on');
-	utf8::upgrade($word);
 	my $result = $wiki->search ("$word") ;
 	my $out; 
 	if ($result) {
@@ -643,7 +642,6 @@ sub definir {
 	   $out =~ s/\[\[.+\]\]//gi;
 	   $out =~ s/(.*?).\]\]//g;
 	   $out = substr($out, 0, 199);
-	   utf8::upgrade($out); 
 	   return "$out...";
 	}
 }
