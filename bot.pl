@@ -707,6 +707,7 @@ sub google {
 }
 sub fortune {
 	my $fortune = `fortune  -a -n 160 -s`;
+	$fortune =~ s/\s+/ /g;
 	return $fortune;
 }
 
