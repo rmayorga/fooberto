@@ -4,6 +4,7 @@ use strict;
 use integer;
 use POE;
 use POE::Component::IRC;
+#use POE::Component::IRC::Plugin::YouTube::MovieFindStore;
 use Net::Google;
 use SOAP::Lite;
 use WWW::Wikipedia;
@@ -131,6 +132,13 @@ sub on_public {
 		        my $out = &google($msg);
 			&say($out, $nick, $usenick, $priv);
 		   }
+		}
+		elsif ($msg =~ s/^youtube//i){
+		  	if (length($msg) >= 1){
+				$msg = "'youtube:'$msg";		
+				my $out = &google($msg);
+				&say($out, $nick, $usenick, $priv);
+			}
 		}
 		elsif ($msg =~ s/^descifrar//) {
 		   if (length($msg) >= 1) {
@@ -735,7 +743,18 @@ sub chanlog {
 	close(LOG)
 }
 
-
+#sub youtube_url {
+#	my $msg;
+#	'Tube' =>
+#		POE::Component::IRC::Plugin::YouTube::MovieFindStore->new(
+#				where 		=> '/home/ulises/bot/foo/fooberto/tube/',
+#				replace 	=> [qr/\s+/, qr/[^w-]/],
+#				replace_char 	=> ['-',      '_'     ],
+#				trigger		=> qr/^tube\s+/i,
+#				banned		=> qr/aol\.com$/i,
+#				)
+	
+#}
 $poe_kernel->run();
 exit 0;
 
