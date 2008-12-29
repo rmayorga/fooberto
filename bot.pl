@@ -261,7 +261,7 @@ sub on_public {
 		}
 		elsif ($msg =~ s/^quote//) {
 		   $msg =~ s/^\ +//g;
-		   if (length($msg) >= 1) {
+		   if (length($msg) >= 1) { 
 			   my $check = &checkauth($nick);
 			   if ($msg =~ s/^add//) {
 				   if ($check) {
@@ -309,6 +309,17 @@ sub on_public {
 			$target =~ s/\ +$//;
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
+		}
+                elsif ($msg =~ s/^help//) {
+		   if (length($msg) < 1)
+                   {
+                        $msg = "help";
+                   }
+                   $msg =~ s/\ +//g;
+                   my $out =gethelp($msg);
+                   if (length($out) >= 1){
+                       &say($out, $nick, $usenick, $priv);
+                   }
 		}
 		else {  
 			$msg =~ s/^\ +//g;
@@ -733,6 +744,15 @@ sub chanlog {
 	open(LOG,">>$logfile") || die("This file will not open!");
 	print LOG "$logme\n";
 	close(LOG)
+}
+
+sub gethelp {
+	my $thecommand = shift;
+	my $sth = $dbh->prepare
+	    ("SELECT doc from help where command='$thecommand'");
+	$sth->execute();
+	my $row = $sth->fetchrow;
+	return $row;
 }
 
 

@@ -5,4 +5,29 @@ sqlite3 bot.db <<SQL_INIT_1
  CREATE TABLE facts (tipe TEXT, date DATE, fact TEXT NOT NULL, fulltext TEXT, who TEXT, PRIMARY KEY (fact));
  CREATE table actions (id TEXT, date DATE, who TEXT, action TEXT, PRIMARY KEY(id));
  CREATE table igno (nick TEXT, date DATE, who, TEXT, PRIMARY KEY(nick));
+ CREATE table help (command TEXT, doc TEXT, PRIMARY KEY(command));
+ 
+ REPLACE INTO help values("help","Lo que puedo hacer: ping, fortune, google, descifrar, definir, visto, karma, aprender, olvidar, identify, action, ignorar, perdonar, debian bug, debian version, debian paquete, quote, ?, saludar, calendar, contarle a, help. Detalles: help comando");
+ REPLACE INTO help values("ping","Mandar un ICMP ECHO_REQUEST a /me ;-)");
+ REPLACE INTO help values("fortune","Conoce lo que te depara la fortuna ;-)");
+ REPLACE INTO help values("google","Buscar.  Sintaxis: google lo que estas buscando");
+ REPLACE INTO help values("descifrar","Verifica que esté correctamente escrita una o varias palabras. Sintaxis: descifrar palabra(s)");
+ REPLACE INTO help values("definir","Voy y busco la definición en la wikipedia. Sintaxis: definir palabra");
+ REPLACE INTO help values("visto","Cuando fue la última vez que vi un nick. Sintaxis: visto nick");
+ REPLACE INTO help values("karma","Que tal anda el karma de un ser. Sintaxis: karma nick | nick++ | nick--");
+ REPLACE INTO help values("aprender","Enseñarme el significado de una palabra. Sintaxis: aprender que palabra es lo_que_es_la_palabra");
+ REPLACE INTO help values("olvidar","Para que se me olvide una palabra. Sintaxis: olvidar palabra");
+ REPLACE INTO help values("identify","Seguro que sos vos? Sintaxis: identify contraseña");
+ REPLACE INTO help values("action","Para acciones dinámicas. Sintaxis: actions list | !action add nombre_id le_hace_algo_a  NICK mas_respecto_alo_que_le_hace | nombre_de_la_acción nick");
+ REPLACE INTO help values("ignorar","No tengo nada que decirte. Sintaxis: ignorar nick");
+ REPLACE INTO help values("Perdonar","Para que perdone a alguien y así ya no ignorarlo. Sintaxis: ignorar nick");
+ REPLACE INTO help values("debian bug","Información de un bug en el BTS de debian. Sintaxis: debian bug numero_del_bug");
+ REPLACE INTO help values("debian version","Versión de un paquete en debian. Sintaxis: debian version nombre_del_paquete");
+ REPLACE INTO help values("debian paquete","Verifico el nombre de un paquete en debian. Sintaxis: debian paquete nombre_del_paquete");
+ REPLACE INTO help values("quote","Frase célebre dicha en el canal. Sintaxis: quote random | quote add frase_celebre");
+ REPLACE INTO help values("?","fooberto que todo lo sabe y lo que no se lo inventa. Sintaxis: una_pregunta?");
+ REPLACE INTO help values("saludar","Saludo a tu amigo por vos. Sintaxis: saludar nick");
+ REPLACE INTO help values("calendar","Este día en la historia. Sintaxis: calendar");
+ REPLACE INTO help values("contarle a","Para contarle a tu cuate acerca de algo. Sintaxis: contarle a nick acerca de tema");
+
 SQL_INIT_1
