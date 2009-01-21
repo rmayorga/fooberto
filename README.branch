@@ -12,3 +12,16 @@ I collected and made simple .deb packages using dh-make-perl, at some points tha
 available at Debian, but besides you can just install the package your self
 or use the ugly .deb that can be found here: http://los.talibanes-del.sl/~rmayorga/bot/dep
 
+Depends list
+============
+libpoe-perl
+libpoe-component-irc-perl
+libconfig-simple-perl
+libtext-autoformat-perl
+libsoap-lite-perl
+libnet-google-perl
+libdbi-perl
+libdbd-sqlite3-perl
+libwww-wikipedia-perl (is not in debian needs to be built with dh-make-perl) 
+
+
