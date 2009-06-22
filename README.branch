@@ -22,6 +22,9 @@ libsoap-lite-perl
 libnet-google-perl
 libdbi-perl
 libdbd-sqlite3-perl
-libwww-wikipedia-perl (is not in debian needs to be built with dh-make-perl) 
+libwww-wikipedia-perl
+
+All these are now in debian, the only one out is libwww-wikipedia-perl, however this can be found in testing and unstable
+can be built with dh-make-perl 
 
 
