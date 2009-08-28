@@ -355,58 +355,61 @@ sub sayto {
 
 # TODO get rid of system commands and use perl
 sub searchpack {
-    eval{
-        my $pack = shift;
-	my $dist = $pack;
-	my $packs;
-	my $msgout;
-	if ($pack =~ m/(^stable)|(^testing)|(^unstable)/) {
-		$dist =~ s/\ \w.+//;
-		$pack =~ s/^.+\ //;
+    my $pack = shift;
+    my $dist = $pack;
+    my $packs;
+    my $msgout;
 
-		foreach (`for i in \$(ls debian-packages/*-$dist.gz) ; do zcat \$i | grep "Package: .*$pack*" ; done`) {
-			chomp($_);
-			$packs .= $_;
-		}
+    eval #try
+    {
+        if ($pack =~ m/(^stable)|(^testing)|(^unstable)/) {
+            $dist =~ s/\ \w.+//;
+            $pack =~ s/^.+\ //;
+            foreach (`for i in \$(ls debian-packages/*-$dist.gz) ; do zcat \$i | grep "Package: .*$pack*" ; done`) {
+                chomp($_);
+                $packs .= $_;
+            }
 	}
+    
 	if(!$packs) { return undef }
 	$packs =~ s/Package://g;
 	$packs =~ s/^\ +//;
-	if ($packs eq $pack) { $msgout = "El paquete existe y se llama tal como lo escribiste" }
+	if ($packs eq $pack){ $msgout = "El paquete existe y se llama tal como lo escribiste" }
 	else { $msgout = "podría ser: ". substr($packs, 0, 70) . " ...?"; }
-	return $msgout;
     };
     if($@)
     {
         return undef;
     };
-        
-
+    return $msgout;
 }
 
 # TODO get rid of system commands and use perl
 sub querypack {
-    eval{
-	my $pack = shift; ##Put all these in config file TODO
-	my @distbranch = "$bconf{$debbranch}";
-	my @dists = split("//",$distbranch[0]);
-	print @dists;
-	my $msgout;
-	my $version;
+    my $pack = shift; ##Put all these in config file TODO
+    my @distbranch = "$bconf{$debbranch}";
+    my @dists = split("//",$distbranch[0]);
+    print @dists;
+    my $msgout;
+    my $version;
+
+    eval #try
+    { 
 	foreach (@dists) {
-		$version = `for i in \$(ls debian-packages/$_.gz) ; do zcat \$i | grep -A 6 "Package: $pack" | grep Version ; done`;
-		if ($version) {
-			chomp($version);
-			chomp($_);
-			$msgout .= " $_->$version";
-		}
+            $version = `for i in \$(ls debian-packages/$_.gz) ; do zcat \$i | grep -A 6 "Package: $pack" | grep Version ; done`;
+            if ($version) {
+                chomp($version);
+                chomp($_);
+                $msgout .= " $_->$version";
+            }
 	}
-	return $msgout
     };
-    if($@)
+    if($@) #catch
     {
         return undef;
     };
+
+    return $msgout
 }
 
 
@@ -414,22 +417,26 @@ sub querypack {
 
 
 sub querybug {
-	my $bug = shift;
-        eval{
-            my $soap = SOAP::Lite->uri('Debbugs/SOAP')->proxy('http://bugs.debian.org/cgi-bin/soap.cgi');
-            my $refbug = $soap->get_status($bug)->result->{$bug};
-            my $msgout;
-            if ($refbug->{id}) {
-		$msgout = "paquete: $refbug->{package}, bug: $refbug->{subject}, severidad: $refbug->{severity}, url: http://bugs.debian.org/$bug";
-		$msgout .= " resuelto por: $refbug->{done}" unless (!$refbug->{done});
-		return $msgout;
-            } else { return undef}
-        };
-        if($@)
-        {
-            return undef;
-        };
-
+    my $bug = shift;
+    my $soap;
+    my $refbug;
+    my $msgout;
+    
+    eval #try
+    {
+        $soap = SOAP::Lite->uri('Debbugs/SOAP')->proxy('http://bugs.debian.org/cgi-bin/soap.cgi');
+        $refbug = $soap->get_status($bug)->result->{$bug};
+    };
+    if($@)
+    {
+        return undef;
+    };
+    if ($refbug->{id}) {
+        $msgout = "paquete: $refbug->{package}, bug: $refbug->{subject}, severidad: $refbug->{severity}, url: http://bugs.debian.org/$bug";
+        $msgout .= " resuelto por: $refbug->{done}" unless (!$refbug->{done});
+        return $msgout;
+    }
+    return undef;
 }
 
 sub addignore {
@@ -587,7 +594,6 @@ sub correctuser {
 	    $msg =~ s/^s//;
             #This eval -if was added by jmasibre bug with s/[///
             eval{
-                
                 my @chan = split(/\//, $msg);
                 $rowi =~ s/$chan[1]/$chan[2]/g;
                 &say("$nick en realidad quería decir \"$rowi\"", $nick, "no", "no");
