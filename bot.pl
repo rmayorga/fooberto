@@ -355,7 +355,8 @@ sub sayto {
 
 # TODO get rid of system commands and use perl
 sub searchpack {
-	my $pack = shift;
+    eval{
+        my $pack = shift;
 	my $dist = $pack;
 	my $packs;
 	my $msgout;
@@ -374,11 +375,18 @@ sub searchpack {
 	if ($packs eq $pack) { $msgout = "El paquete existe y se llama tal como lo escribiste" }
 	else { $msgout = "podría ser: ". substr($packs, 0, 70) . " ...?"; }
 	return $msgout;
+    };
+    if($@)
+    {
+        return undef;
+    };
+        
 
 }
 
 # TODO get rid of system commands and use perl
 sub querypack {
+    eval{
 	my $pack = shift; ##Put all these in config file TODO
 	my @distbranch = "$bconf{$debbranch}";
 	my @dists = split("//",$distbranch[0]);
@@ -394,6 +402,11 @@ sub querypack {
 		}
 	}
 	return $msgout
+    };
+    if($@)
+    {
+        return undef;
+    };
 }
 
 
@@ -402,14 +415,20 @@ sub querypack {
 
 sub querybug {
 	my $bug = shift;
-	my $soap = SOAP::Lite->uri('Debbugs/SOAP')->proxy('http://bugs.debian.org/cgi-bin/soap.cgi');
-	my $refbug = $soap->get_status($bug)->result->{$bug};
-	my $msgout;
-	if ($refbug->{id}) {
+        eval{
+            my $soap = SOAP::Lite->uri('Debbugs/SOAP')->proxy('http://bugs.debian.org/cgi-bin/soap.cgi');
+            my $refbug = $soap->get_status($bug)->result->{$bug};
+            my $msgout;
+            if ($refbug->{id}) {
 		$msgout = "paquete: $refbug->{package}, bug: $refbug->{subject}, severidad: $refbug->{severity}, url: http://bugs.debian.org/$bug";
 		$msgout .= " resuelto por: $refbug->{done}" unless (!$refbug->{done});
 		return $msgout;
-	} else { return undef}
+            } else { return undef}
+        };
+        if($@)
+        {
+            return undef;
+        };
 
 }
 
@@ -566,9 +585,18 @@ sub correctuser {
 	    $sth->execute();
 	    my $rowi = $sth->fetchrow;
 	    $msg =~ s/^s//;
-	    my @chan = split(/\//, $msg);
-	    $rowi =~ s/$chan[1]/$chan[2]/g;
-	    &say("$nick en realidad quería decir \"$rowi\"", $nick, "no", "no");
+            #This eval -if was added by jmasibre bug with s/[///
+            eval{
+                
+                my @chan = split(/\//, $msg);
+                $rowi =~ s/$chan[1]/$chan[2]/g;
+                &say("$nick en realidad quería decir \"$rowi\"", $nick, "no", "no");
+            };
+            if($@)
+            {
+                ### catch block
+		&say("$nick WTF! ¬¬", $nick, "no", "no");
+            };
       }
 }
 
