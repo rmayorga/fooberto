@@ -845,7 +845,11 @@ sub google {
             $answer = $result->uri;
         }
         else {
-            $answer = $search->error->reason;
+            #if there is an answer then see the reason
+            if($answer){
+                $answer = $search->error->reason;
+            }
+            
         }
     $answer = $answer;
         return $answer;
