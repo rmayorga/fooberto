@@ -4,10 +4,16 @@ use strict;
 use integer;
 use POE;
 use POE::Component::IRC;
-use Net::Google;
+use Net::Google; #thiw was replaced by Google::search /jmas
+use Google::Search;
 use SOAP::Lite;
 use WWW::Wikipedia;
-use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
+#use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
+#here should be the my ($key =) $LOCAL_GOOGLE_KEY ... # This should be a valid API key, gotten from:
+# http://code.google.com/apis/ajaxsearch/signup.html 
+#my ($referer =)
+#use constant LOCAL_GOOGLE_REFERER => "http://www.mysite.com/index.html" # This should be a valid referer for the above key
+#^^^^^^^ All this should be at the config file (google stuff)
 use Config::Simple;
 use Getopt::Std;
 # Just one option at this momment
@@ -40,6 +46,14 @@ my $bserv = "BOT.server";
 my $probab = "RESPONSES.probable";
 my $factran = "RESPONSES.facts";
 my $debbranch = "DEBIAN.branches";
+
+# more ugly options
+my $bgkey = "BOT.google_key";
+my $bgreferer = "BOT.google_referer";
+my $local_google_key = "$bconf{$bgkey}";
+my $local_google_referer = "$bconf{$bgreferer}";
+
+
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -730,25 +744,50 @@ sub definir {
 	}
 }
 sub descifrar {
-	my $search = shift;
-	my $goo = Net::Google->new(key=>LOCAL_GOOGLE_KEY);
-	my $word = $goo->spelling(phrase=>$search)->suggest();
+        #replacing soap api by the new ajax api
+	# my $search = shift;
+	# my $goo = Net::Google->new(key=>LOCAL_GOOGLE_KEY);
+	# my $word = $goo->spelling(phrase=>$search)->suggest();
+        # the new AJAX Api
+        my $word = "";
+        # my $search = Google::Search->Web(q => "rock", key => $local_google_key, referer => $local_google_referer);
+        # my $result = $search->first;
+        # if ($result) {
+        #     $word = $result->uri;
+        # }
+        # else {
+        #     $word = $search->error->reason;
+        # }
+        
 	return $word;
 }
 
 sub google {
-	my $search = shift;
-	my $goo = Net::Google->new(key=>LOCAL_GOOGLE_KEY);
-	my $goosh = $goo->search();
-	$goosh->query($search);
-	$goosh->lr(qw(es en));
-	$goosh->max_results(1);
+        #replacing soap api by the new ajax api
+	#my $search = shift;
+	# my $goo = Net::Google->new(key=>LOCAL_GOOGLE_KEY);
+	# my $goosh = $goo->search();
+	# $goosh->query($search);
+	# $goosh->lr(qw(es en));
+	# $goosh->max_results(1);
 
-	my $answer;
-	foreach (@{$goosh->results()}) {
-		$answer = $_->URL();
-	}
-	return $answer;
+	#my $answer;
+	# foreach (@{$goosh->results()}) {
+	# 	$answer = $_->URL();
+	# }
+        my $search_string = shift;
+        my $answer;
+        my $search = Google::Search->Web(q => $search_string, key => $local_google_key, referer => $local_google_referer);
+        my $result = $search->first;
+        if ($result) {
+            $answer = $result->uri;
+        }
+        else {
+            $answer = $search->error->reason;
+        }
+    $answer = $answer;
+        return $answer;
+       
 }
 sub fortune {
 	my $fortune = `fortune  -a -n 160 -s`;
