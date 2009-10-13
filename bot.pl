@@ -95,10 +95,10 @@ sub on_public {
     my $nick = ( split /!/, $who )[0];
     my $channel = $where->[0];
 
-    #Sanitize variables
+    #sanitize variables
     $nick = $dbh->quote($nick);
     $msg = $dbh->quote($msg);
-    #take off all the apostofres, every insert add this where is necesary
+    #take off apostrofes. This will be added by each insert comand.
     $nick =~ s/\'//g;
     $msg =~ s/\'//g;
     
@@ -459,23 +459,16 @@ sub querybug {
 
 sub addignore {
 	my ($nick, $msg) = @_;
-        #sanitize variables
-        $msg = $dbh->quote($msg);
-        $nick = $dbh->quote($nick);
-        
         my $sth = $dbh->prepare
-            ("INSERT INTO igno (nick, date, who, text) VALUES ($msg, date('now'), $nick, 'ig')");
+            ("INSERT INTO igno (nick, date, who, text) VALUES ('$msg', date('now'), '$nick', 'ig')");
         $sth->execute();
 
 }
 
 sub forgetignore  {
 	my $msg = shift;
-        #sanitize variables
-        $msg = $dbh->quote($msg);
-
         my $sth = $dbh->prepare
-            ("SELECT rowid from igno where nick=$msg");
+            ("SELECT rowid from igno where nick='$msg'");
         $sth->execute();
         my $row = $sth->fetchrow;
         $dbh->do("DELETE from igno where rowid='$row'")
@@ -493,11 +486,8 @@ sub catchignore {
 
 sub checkignore {
 	my $nick = shift;
-        #sanitize variables
-        $nick = $dbh->quote($nick);
-
 	my $sth = $dbh->prepare
-	   ("SELECT date from igno where nick=$nick");
+	   ("SELECT date from igno where nick='$nick'");
         $sth->execute();
 	my $igno = $sth->fetchrow();
 	if ($igno) { return 'yes' }
@@ -533,14 +523,8 @@ sub actionadd {
 	my $action = $msg;
 	$action  =~ s/^\w+ //;
 	return undef unless $msg =~ m/NICK/;
-
-        #sanitize variables
-        $actid= $dbh->quote($actid);
-        $nick = $dbh->quote($nick);
-        $action = $dbh->quote($action);
-        
         my $sth = $dbh->prepare
-           ("INSERT INTO actions (id, date, who, action) VALUES ($actid, datetime('now','localtime'), $nick, $action)");
+           ("INSERT INTO actions (id, date, who, action) VALUES ('$actid', datetime('now','localtime'), '$nick', '$action')");
         $sth->execute();
 }
 
@@ -548,15 +532,10 @@ sub faction {
 	my ($nick, $channel, $action) = @_;
 	my $msg = $action;
 	my $who = $action;
-
 	$who =~ s/^\w+ //;
 	$action =~ s/\ \w+.+//;
-
-        #sanitize variables
-        $action = $dbh->quote($action);
-
 	my $sth=$dbh->prepare
-	   ("SELECT action from actions where id=$action");
+	   ("SELECT action from actions where id='$action'");
         $sth->execute();
 	my $row = $sth->fetchrow;
 	if ($row) {
@@ -591,23 +570,16 @@ sub quotegetrand {
 
 sub quoteadd {
 	my ($msg, $nick)  = @_;
-        #sanitize variables
-        $msg = $dbh->quote($msg);
-        $nick = $dbh->quote($nick);
-        
 	my $sth = $dbh->prepare
-	     ("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('quote', date('now','localtime'), datetime('now','localtime'), $msg, $nick) ");
+	     ("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('quote', date('now','localtime'), datetime('now','localtime'), '$msg', '$nick') ");
 	 $sth->execute();
 
 }
 
 sub checkauth {
 	my $nick = shift;
-        #sanitize variables
-        $nick = $dbh->quote($nick);
-
 	my $sth = $dbh->prepare
-	    ("SELECT perm from users where nick=$nick");
+	    ("SELECT perm from users where nick='$nick'");
 	$sth->execute();
 	my $ok = $sth->fetchrow;
 	if ($ok) { return "ok" } else { return undef }
@@ -615,16 +587,13 @@ sub checkauth {
 
 sub authen {
 	my ($nick, $gpass) = @_;
-        #sanitize variables
-        $nick = $dbh->quote($nick);
-        
 	my $sth = $dbh->prepare
-	   ("SELECT pass from users where nick=$nick");
+	   ("SELECT pass from users where nick='$nick'");
 	$sth->execute();
 	my $dbpass = $sth->fetchrow;
 	if ($dbpass) {
 		if ($dbpass eq $gpass) {
-			$dbh->do("UPDATE users SET perm='aut' WHERE nick=$nick");
+			$dbh->do("UPDATE users SET perm='aut' WHERE nick='$nick'");
 			return "ok"; 
 		} else { return undef }
 	}
@@ -635,13 +604,9 @@ sub authen {
 sub correctuser {
 # Add a check if the user exists even if try to use the regexp->FIXME
 	my ($msg, $nick) = @_;
-
-        
 	if ($msg =~ m/^s\/.+\/$/) {
-            #sanitize variables
-            $nick = $dbh->quote($nick);
 	    my $sth = $dbh->prepare
-	        ("SELECT last from users where nick=$nick");
+	        ("SELECT last from users where nick='$nick'");
 	    $sth->execute();
 	    my $rowi = $sth->fetchrow;
 	    $msg =~ s/^s//;
@@ -661,12 +626,8 @@ sub correctuser {
 
 sub forgetfact {
 	my ($nick, $dfact) = @_;
-        #sanitize variables
-        $nick = $dbh->quote($nick);
-        $dfact = $dbh->quote($dfact);
-
 	my $sth = $dbh->prepare
-	    ("SELECT rowid from facts where fact=$dfact");
+	    ("SELECT rowid from facts where fact='$dfact'");
 	$sth->execute();
 	my $row = $sth->fetchrow;
 	$dbh->do("DELETE from facts where rowid='$row'") unless ($nick eq $dfact);
@@ -675,23 +636,14 @@ sub forgetfact {
 
 sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
-
-        #sanitize variables
-        $fact = $dbh->quote($fact);
-        $nick = $dbh->quote($nick);
-        $fulltext = $dbh->quote($fulltext);
-        
-	my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), $fact, $fulltext, $nick) ");
+	my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
 	$sth->execute();
 }
 
 sub fffact {
 	my $lfact = shift;
-        #sanitize variables
-        $lfact = $dbh->quote($lfact);
-        
 	my $sth = $dbh->prepare
-	   ("SELECT fulltext from facts where fact=$lfact");
+	   ("SELECT fulltext from facts where fact='$lfact'");
 	$sth->execute();
 	my $row = $sth->fetchrow;
 	if ($row) { 
@@ -704,11 +656,8 @@ sub fffact {
 
 sub getkarma {
 	my $nick = shift;
-        #sanitize variables
-        $nick = $dbh->quote($nick);
-
 	my $sth = $dbh->prepare
-	    ("SELECT karma from users where NICK=$nick");
+	    ("SELECT karma from users where NICK='$nick'");
 	$sth->execute();
 	my $row = $sth->fetchrow;
 	return $row;
@@ -723,13 +672,9 @@ sub karmacatch {
 		push (@k, $given);
 	} else { return }
 	my $lucky = $given if ( &dbuexist($k[2]) );
-
-        #sanitize variables
-        $lucky = $dbh->quote($lucky);
-
 	if ($lucky) {
 	     my $sth = $dbh->prepare
-	         ("SELECT karma from users where NICK=$lucky");
+	         ("SELECT karma from users where NICK='$lucky'");
 	     $sth->execute();
 	     my $row = $sth->fetchrow;
 	     if ($k[1] eq '++') {
@@ -737,19 +682,16 @@ sub karmacatch {
 	     } else {
 		     $row--;
 	     }
-             $dbh->do("UPDATE users SET karma='$row' WHERE nick=$lucky");
+             $dbh->do("UPDATE users SET karma='$row' WHERE nick='$lucky'");
 	}
 
 }
 
 sub dbuexist {
 	my $nick = shift;
-        #sanitize variables
-        $nick = $dbh->quote($nick);
-
 	if ($nick) {
 	    my $sth = $dbh->prepare
-	        ("SELECT seen, last from users where NICK=$nick");
+	        ("SELECT seen, last from users where NICK='$nick'");
 	        $sth->execute();
 	        my @row = $sth->fetchrow_array;
 	        if ($row[0]) {
@@ -760,16 +702,12 @@ sub dbuexist {
 
 sub dblog {
 	my ($nick, $msg) = @_;
-        my @seen = &dbuexist($nick); 
-	#$msg =~ s/'//g; #this seems a sanitize that is replaced by the quote function.
-        #sanitize variables
-        $msg = $dbh->quote($msg);
-        $nick = $dbh->quote($nick);
-	
+	$msg =~ s/'//g;
+	my @seen = &dbuexist($nick); 
 	if ($seen[0]) {
-		$dbh->do("UPDATE users SET seen=datetime('now','localtime'), last=$msg WHERE nick=$nick");
+		$dbh->do("UPDATE users SET seen=datetime('now','localtime'), last='$msg' WHERE nick='$nick'");
 	} else {
-		my $sth = $dbh->prepare("INSERT INTO users (nick, seen, last) VALUES ($nick, datetime('now','localtime'), $msg)");
+		my $sth = $dbh->prepare("INSERT INTO users (nick, seen, last) VALUES ('$nick', datetime('now','localtime'), '$msg')");
 		$sth->execute();
 	}
 }
@@ -852,11 +790,7 @@ sub google {
             $answer = $result->uri;
         }
         else {
-            #if there is an answer then see the reason
-            if($answer){
-                $answer = $search->error->reason;
-            }
-            
+            $answer = $search->error->reason;
         }
     $answer = $answer;
         return $answer;
@@ -894,12 +828,8 @@ sub chanlog {
 
 sub gethelp {
 	my $thecommand = shift;
-        #sanitize variables
-        $thecommand = $dbh->quote($thecommand);
-             
-
 	my $sth = $dbh->prepare
-	    ("SELECT doc from help where command=$thecommand");
+	    ("SELECT doc from help where command='$thecommand'");
 	$sth->execute();
 	my $row = $sth->fetchrow;
 	return $row;
