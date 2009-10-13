@@ -95,6 +95,13 @@ sub on_public {
     my $nick = ( split /!/, $who )[0];
     my $channel = $where->[0];
 
+    #Sanitize variables
+    $nick = $dbh->quote($nick);
+    $msg = $dbh->quote($msg);
+    #take off all the apostofres, every insert add this where is necesary
+    $nick =~ s/\'//g;
+    $msg =~ s/\'//g;
+    
    # print ouput to screen and also log it
     my $ts = scalar localtime;
     print " [$ts] <$nick:$channel> $msg\n";
