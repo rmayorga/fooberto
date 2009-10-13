@@ -50,10 +50,6 @@ my $debbranch = "DEBIAN.branches";
 # more ugly options
 my $bgkey = "BOT.google_key";
 my $bgreferer = "BOT.google_referer";
-my $local_google_key = "$bconf{$bgkey}";
-my $local_google_referer = "$bconf{$bgreferer}";
-
-
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -782,6 +778,10 @@ sub google {
 	# foreach (@{$goosh->results()}) {
 	# 	$answer = $_->URL();
 	# }
+
+        my $local_google_key = "$bconf{$bgkey}";
+        my $local_google_referer = "$bconf{$bgreferer}";
+
         my $search_string = shift;
         my $answer;
         my $search = Google::Search->Web(q => $search_string, key => $local_google_key, referer => $local_google_referer);
