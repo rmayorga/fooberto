@@ -51,6 +51,7 @@ my $debbranch = "DEBIAN.branches";
 my $bgkey = "BOT.google_key";
 my $bgreferer = "BOT.google_referer";
 
+
 sub CHANNEL () { "$bconf{$bchan}" }
 
 my ($irc) = POE::Component::IRC->spawn();
@@ -778,7 +779,6 @@ sub google {
 	# foreach (@{$goosh->results()}) {
 	# 	$answer = $_->URL();
 	# }
-
         my $local_google_key = "$bconf{$bgkey}";
         my $local_google_referer = "$bconf{$bgreferer}";
 
