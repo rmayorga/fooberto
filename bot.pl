@@ -290,9 +290,8 @@ sub on_public {
                                    print "resultado del random $randqu";
 				   &say("\" $randqu \"", $nick, $usenick, $priv);
 			   } else {
-                               my $nickqu = "";
                                my $nick_query = ( split /" "/, $msg )[0];
-                               $nickqu = &quotegetnick($nick_query);
+                               my $nickqu = &quotegetnick($nick_query);
                                if (length($nickqu) >= 1) {
                                    &say("\" $nickqu \"", $nick, $usenick, $priv);
                                }
