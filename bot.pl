@@ -279,7 +279,8 @@ sub on_public {
 		}
 		elsif ($msg =~ s/^quote//) {
 		   $msg =~ s/^\ +//g;
-		   if (length($msg) >= 1) { 
+		   if (length($msg) >= 1) {
+                       print "entrando a quote\n";
 			   my $check = &checkauth($nick);
 			   if ($msg =~ s/^add//) {
 				   if ($check) {
@@ -288,7 +289,11 @@ sub on_public {
 			   } elsif ($msg =~ s/^random//) {
 				   my $randqu = &quotegetrand();
 				   &say("\" $randqu \"", $nick, $usenick, $priv);
-			   }
+			   } else {
+                               my $nick_query = ( split /" "/, $msg )[0];
+                               my $nickqu = &quotegetnick($nick_query);
+                               &say("\" $nickqu \"", $nick, $usenick, $priv);
+                           }
 		   }
 		}
 		elsif ($msg =~ s/\?$//) {
@@ -567,6 +572,23 @@ sub quotegetrand {
 	 return $out;
 }
 
+sub quotegetnick {
+         my ($nick)  = @_;
+	 my @rest;
+	 my $sth = $dbh->prepare
+	    ("select COUNT(*) from facts where tipe='quote' and fulltext like('%$nick%')");
+	 $sth->execute();
+	 my $rown = $sth->fetchrow;
+	 $sth = $dbh->prepare
+	   ("SELECT fulltext from facts where tipe='quote' and fulltext like('%$nick%')");
+	 $sth->execute();
+	 for (1..$rown) {
+		 push (@rest, $sth->fetchrow())
+	 }
+         my $random = int rand @rest;
+	 my $out = $rest[$random];
+	 return $out;
+}
 
 sub quoteadd {
 	my ($msg, $nick)  = @_;
