@@ -280,7 +280,6 @@ sub on_public {
 		elsif ($msg =~ s/^quote//) {
 		   $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
-                       print "entrando a quote\n";
 			   my $check = &checkauth($nick);
 			   if ($msg =~ s/^add//) {
 				   if ($check) {
@@ -288,11 +287,15 @@ sub on_public {
 				   }
 			   } elsif ($msg =~ s/^random//) {
 				   my $randqu = &quotegetrand();
+                                   print "resultado del random $randqu";
 				   &say("\" $randqu \"", $nick, $usenick, $priv);
 			   } else {
+                               my $nickqu = "";
                                my $nick_query = ( split /" "/, $msg )[0];
-                               my $nickqu = &quotegetnick($nick_query);
-                               &say("\" $nickqu \"", $nick, $usenick, $priv);
+                               $nickqu = &quotegetnick($nick_query);
+                               if (length($nickqu) >= 1) {
+                                   &say("\" $nickqu \"", $nick, $usenick, $priv);
+                               }
                            }
 		   }
 		}
@@ -573,20 +576,23 @@ sub quotegetrand {
 }
 
 sub quotegetnick {
-         my ($nick)  = @_;
+         my ($nick_query)  = @_;
 	 my @rest;
+         my $out = "";
 	 my $sth = $dbh->prepare
-	    ("select COUNT(*) from facts where tipe='quote' and fulltext like('%$nick%')");
+	    ("select COUNT(*) from facts where tipe='quote' and fulltext like('%$nick_query%')");
 	 $sth->execute();
 	 my $rown = $sth->fetchrow;
 	 $sth = $dbh->prepare
-	   ("SELECT fulltext from facts where tipe='quote' and fulltext like('%$nick%')");
+	   ("SELECT fulltext from facts where tipe='quote' and fulltext like('%$nick_query%')");
 	 $sth->execute();
-	 for (1..$rown) {
+         if ($rown > 0) {
+             for (1..$rown) {
 		 push (@rest, $sth->fetchrow())
-	 }
-         my $random = int rand @rest;
-	 my $out = $rest[$random];
+             }
+             my $random = int rand @rest;
+             $out = $rest[$random];
+         }
 	 return $out;
 }
 
