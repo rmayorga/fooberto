@@ -8,14 +8,35 @@ use Net::Google; #thiw was replaced by Google::search /jmas
 use Google::Search;
 use SOAP::Lite;
 use WWW::Wikipedia;
-#use constant LOCAL_GOOGLE_KEY => "PqCJzeJQFHL/2AjeinchN3PyJoC2xUaM";
-#here should be the my ($key =) $LOCAL_GOOGLE_KEY ... # This should be a valid API key, gotten from:
-# http://code.google.com/apis/ajaxsearch/signup.html 
-#my ($referer =)
-#use constant LOCAL_GOOGLE_REFERER => "http://www.mysite.com/index.html" # This should be a valid referer for the above key
-#^^^^^^^ All this should be at the config file (google stuff)
 use Config::Simple;
 use Getopt::Std;
+use Pod::POM;
+use DBI;
+
+# get the pod of this file
+my $parser = Pod::POM->new();
+my $pom = $parser->parse_file("bot.pl")
+    || die $parser->error();
+# examine any warnings raised
+foreach my $warning ($parser->warnings()) {
+    warn $warning, "\n";
+}
+
+
+
+=head1 NAME
+An irc bot
+
+=head1 DESCRIPTION
+
+This is fooberto, a deeply fun irc robot.
+
+=head2 METHODS
+
+Fooberto implements the following methods:
+
+=cut
+
 # Just one option at this momment
 our($opt_c);
 getopts('c:');
@@ -26,13 +47,15 @@ my $cnfile;
 $cnfile = $opt_c || "bot.conf";
 Config::Simple->import_from($cnfile, \%bconf);
 
+
 my $bdbn = "BOT.database";
 my $lgfle = "BOT.logfile";
-use DBI;
+
 # database should como from the config file TODO
 my $dbh = DBI->connect("dbi:SQLite:dbname=$bconf{$bdbn}","","");
 
 my $logfile = $bconf{$lgfle};
+
 
 # ugly way to have the correct names, /me lazy
 my $bchan = "BOT.channel";
@@ -377,6 +400,18 @@ sub sayto {
 		&say("$prob[ int rand @prob ] $about es $msg", $nick, 'no', 'yes');
 	} else { return undef }
 }
+
+
+
+=over 4
+
+=item debian
+
+This are the debian functions
+debian search package_name : search the package
+debian bug bug_number : search info about the bug_number
+
+=cut
 
 # TODO get rid of system commands and use perl
 sub searchpack {
@@ -853,16 +888,61 @@ sub chanlog {
 	close(LOG)
 }
 
+=item help
+
+Prints this help.
+
+=back
+
+=cut
 sub gethelp {
-	my $thecommand = shift;
-	my $sth = $dbh->prepare
-	    ("SELECT doc from help where command='$thecommand'");
-	$sth->execute();
-	my $row = $sth->fetchrow;
-	return $row;
+        #old style doc from the db
+	# my $thecommand = shift;
+	# my $sth = $dbh->prepare
+	#     ("SELECT doc from help where command='$thecommand'");
+	# $sth->execute();
+	# my $row = $sth->fetchrow;
+
+        
+        #pod help
+        #ref http://search.cpan.org/~andrewf/Pod-POM-0.25/lib/Pod/POM.pm
+
+        my $sections = $pom->head1();
+
+        # print "Pod::secciones: \n";#debug
+        # foreach my $s (@$sections) {
+        #     print $s->title();
+        # }
+
+        my $desc = $sections->[1];
+        # print "Pod::subsecciones: \n";#debug
+        # foreach my $ss ($desc->head2()) {
+        #     print $ss->title();
+        #     print "\n";
+        # }
+
+        #print "Pod:items:\n";#debug
+        #See the pod (mixed with the code)
+        my $doc_string = "";
+        foreach my $item ($desc->head2->[0]->over->[0]->item) {
+            $doc_string =  $doc_string.$item->title().": ";
+            $doc_string =  $doc_string.$item->content()." ";
+        }
+
+        #some cleanup
+        $doc_string =~ s/\n/, /g;
+        $doc_string =~ s/, , /, /g;
+        $doc_string =~ s/\.,//g;
+        
+	return $doc_string;
 }
 
 
 $poe_kernel->run();
 exit 0;
 
+=head1 AUTHOR
+
+This program was written by Rene Mayorga E<lt>rmayorga@debian.orgE<gt>
+
+=cut
