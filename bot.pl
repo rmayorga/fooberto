@@ -405,11 +405,28 @@ sub sayto {
 
 =over 4
 
+=item calendar
+
+Historia :)
+
+=item saludar
+
+saludar nick
+
+=item visto
+
+visto nick
+
+=item contarle
+
+    contarle a nick tema
+
 =item debian
 
-This are the debian functions
-debian search package_name : search the package
-debian bug bug_number : search info about the bug_number
+Las funciones Debian
+debian search package_name
+debian version package_name
+debian bug bug_number : Mostrar info respecto a ese bug
 
 =cut
 
@@ -472,10 +489,6 @@ sub querypack {
     return $msgout
 }
 
-
-
-
-
 sub querybug {
     my $bug = shift;
     my $soap;
@@ -499,6 +512,14 @@ sub querybug {
     return undef;
 }
 
+=item ignorar
+
+ignorar nick
+
+=back
+
+=cut
+
 sub addignore {
 	my ($nick, $msg) = @_;
         my $sth = $dbh->prepare
@@ -506,6 +527,14 @@ sub addignore {
         $sth->execute();
 
 }
+
+=item perdonar
+
+perdonar nick
+
+=back
+
+=cut
 
 sub forgetignore  {
 	my $msg = shift;
@@ -535,6 +564,15 @@ sub checkignore {
 	if ($igno) { return 'yes' }
 }
 
+=item action
+
+action list
+action id_accion le_hace_algo_a NICK algo_mas
+action id_accion nick
+
+=back
+
+=cut
 
 sub actionlist {
 	my ($nick, $channel) = @_;; 
@@ -592,6 +630,15 @@ sub faction {
 
 }
 
+=item quote
+
+quote add the_quote
+quote random
+quote nick
+
+=back
+
+=cut
 
 sub quotegetrand {
 	 my @rest;
@@ -661,6 +708,15 @@ sub authen {
 	}
 }
 
+
+=item corregir
+
+s/palabro/palabra/
+
+=back
+
+=cut
+
 # this is totaly *WRONG* this is a bad approch, /me should not try to write
 # code when is a kind of drunk
 sub correctuser {
@@ -685,6 +741,15 @@ sub correctuser {
             };
       }
 }
+
+=item aprender
+
+aprender que id es definicion_de_id
+olvidar id
+
+=back
+
+=cut
 
 sub forgetfact {
 	my ($nick, $dfact) = @_;
@@ -715,6 +780,13 @@ sub fffact {
 
 }
 
+=item karma
+
+karma nick
+
+=back
+
+=cut
 
 sub getkarma {
 	my $nick = shift;
@@ -774,6 +846,14 @@ sub dblog {
 	}
 }
 
+=item definir
+
+definir palabra
+
+=back
+
+=cut
+
 sub definir {
 #TODO this have some problems when the word has UTF-8 chars, like 'ratón'
 	my $word = shift;
@@ -828,6 +908,14 @@ sub descifrar {
 	return $word;
 }
 
+=item google
+
+google palabra
+
+=back
+
+=cut
+
 sub google {
         #replacing soap api by the new ajax api
 	#my $search = shift;
@@ -858,6 +946,15 @@ sub google {
         return $answer;
        
 }
+
+=item fortune
+
+Lo que te depara el futuro
+
+=back
+
+=cut
+
 sub fortune {
 	my $fortune = `fortune  -a -n 160 -s`;
 	$fortune =~ s/\s+/ /g;
@@ -896,32 +993,11 @@ Prints this help.
 
 =cut
 sub gethelp {
-        #old style doc from the db
-	# my $thecommand = shift;
-	# my $sth = $dbh->prepare
-	#     ("SELECT doc from help where command='$thecommand'");
-	# $sth->execute();
-	# my $row = $sth->fetchrow;
-
-        
         #pod help
         #ref http://search.cpan.org/~andrewf/Pod-POM-0.25/lib/Pod/POM.pm
 
         my $sections = $pom->head1();
-
-        # print "Pod::secciones: \n";#debug
-        # foreach my $s (@$sections) {
-        #     print $s->title();
-        # }
-
         my $desc = $sections->[1];
-        # print "Pod::subsecciones: \n";#debug
-        # foreach my $ss ($desc->head2()) {
-        #     print $ss->title();
-        #     print "\n";
-        # }
-
-        #print "Pod:items:\n";#debug
         #See the pod (mixed with the code)
         my $doc_string = "";
         foreach my $item ($desc->head2->[0]->over->[0]->item) {
