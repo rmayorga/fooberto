@@ -419,7 +419,7 @@ visto nick
 
 =item contarle
 
-    contarle a nick tema
+contarle a nick tema
 
 =item debian
 
@@ -516,8 +516,6 @@ sub querybug {
 
 ignorar nick
 
-=back
-
 =cut
 
 sub addignore {
@@ -531,8 +529,6 @@ sub addignore {
 =item perdonar
 
 perdonar nick
-
-=back
 
 =cut
 
@@ -569,8 +565,6 @@ sub checkignore {
 action list
 action id_accion le_hace_algo_a NICK algo_mas
 action id_accion nick
-
-=back
 
 =cut
 
@@ -635,8 +629,6 @@ sub faction {
 quote add the_quote
 quote random
 quote nick
-
-=back
 
 =cut
 
@@ -713,8 +705,6 @@ sub authen {
 
 s/palabro/palabra/
 
-=back
-
 =cut
 
 # this is totaly *WRONG* this is a bad approch, /me should not try to write
@@ -746,8 +736,6 @@ sub correctuser {
 
 aprender que id es definicion_de_id
 olvidar id
-
-=back
 
 =cut
 
@@ -783,8 +771,6 @@ sub fffact {
 =item karma
 
 karma nick
-
-=back
 
 =cut
 
@@ -850,8 +836,6 @@ sub dblog {
 
 definir palabra
 
-=back
-
 =cut
 
 sub definir {
@@ -912,8 +896,6 @@ sub descifrar {
 
 google palabra
 
-=back
-
 =cut
 
 sub google {
@@ -950,8 +932,6 @@ sub google {
 =item fortune
 
 Lo que te depara el futuro
-
-=back
 
 =cut
 
