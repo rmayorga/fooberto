@@ -359,10 +359,6 @@ sub on_public {
 			&sayto($target, $about); 
 		}
                 elsif ($msg =~ s/^help//) {
-		   if (length($msg) < 1)
-                   {
-                        $msg = "help";
-                   }
                    $msg =~ s/\ +//g;
                    my $out =gethelp($msg);
                    if (length($out) >= 1){
@@ -407,26 +403,27 @@ sub sayto {
 
 =item calendar
 
-Historia :)
+Fechas cercanas, dignas de conmemorar con una cerveza o/.
 
 =item saludar
 
-saludar nick
+Sintaxis: saludar nick 
+fooberto saluda amablemente por vos 
 
 =item visto
 
-visto nick
+Sintaxis: visto nick 
 
 =item contarle
 
-contarle a nick tema
+Sintaxis: contarle a nick tema
 
 =item debian
 
 Las funciones Debian
-debian search package_name
-debian version package_name
-debian bug bug_number : Mostrar info respecto a ese bug
+debian search package_name 
+debian version package_name 
+debian bug bug_number : Mostrar info respecto a ese bug 
 
 =cut
 
@@ -514,7 +511,7 @@ sub querybug {
 
 =item ignorar
 
-ignorar nick
+Sintaxis: ignorar nick
 
 =cut
 
@@ -528,7 +525,7 @@ sub addignore {
 
 =item perdonar
 
-perdonar nick
+Sintaxis: perdonar nick
 
 =cut
 
@@ -562,9 +559,9 @@ sub checkignore {
 
 =item action
 
-action list
-action id_accion le_hace_algo_a NICK algo_mas
-action id_accion nick
+action list 
+action id_accion le_hace_algo_a NICK algo_mas 
+action id_accion nick 
 
 =cut
 
@@ -626,9 +623,9 @@ sub faction {
 
 =item quote
 
-quote add the_quote
-quote random
-quote nick
+quote add the_quote 
+quote random 
+quote nick 
 
 =cut
 
@@ -703,7 +700,7 @@ sub authen {
 
 =item corregir
 
-s/palabro/palabra/
+Sintaxis: s/palabro/palabra/ 
 
 =cut
 
@@ -734,8 +731,8 @@ sub correctuser {
 
 =item aprender
 
-aprender que id es definicion_de_id
-olvidar id
+aprender que id es definicion_de_id 
+olvidar id 
 
 =cut
 
@@ -770,7 +767,7 @@ sub fffact {
 
 =item karma
 
-karma nick
+Sintaxis: karma nick 
 
 =cut
 
@@ -834,7 +831,8 @@ sub dblog {
 
 =item definir
 
-definir palabra
+Sintaxis: definir palabra 
+Veamos que dice la wikipedia 
 
 =cut
 
@@ -894,7 +892,7 @@ sub descifrar {
 
 =item google
 
-google palabra
+Sintaxis: google palabra
 
 =cut
 
@@ -931,7 +929,7 @@ sub google {
 
 =item fortune
 
-Lo que te depara el futuro
+Ve lo que te depara el futuro
 
 =cut
 
@@ -967,12 +965,15 @@ sub chanlog {
 
 =item help
 
-Prints this help.
+Sintaxis: help 
+help comando
+Muestra la ayuda :)
 
 =back
 
 =cut
 sub gethelp {
+        my ($msg) =@_;
         #pod help
         #ref http://search.cpan.org/~andrewf/Pod-POM-0.25/lib/Pod/POM.pm
 
@@ -980,16 +981,30 @@ sub gethelp {
         my $desc = $sections->[1];
         #See the pod (mixed with the code)
         my $doc_string = "";
-        foreach my $item ($desc->head2->[0]->over->[0]->item) {
-            $doc_string =  $doc_string.$item->title().": ";
-            $doc_string =  $doc_string.$item->content()." ";
+        #ask just general help
+        if (length($msg) < 1)
+        {
+            foreach my $item ($desc->head2->[0]->over->[0]->item) {
+                $doc_string =  $doc_string." ".$item->title().",";
+            }
+        } else #ask especific help of an item
+        {
+            #print "ask especific help for '$msg'\n";#debug
+            foreach my $item ($desc->head2->[0]->over->[0]->item) {
+                $doc_string =  $item->title();
+                #print "comparing '$doc_string' eq '$msg'\n";#debug
+                if($doc_string eq $msg){
+                    print "equal!";
+                    $doc_string =  $doc_string.": ".$item->content()." ";
+                    last; #stop de loop
+                }
+            }
         }
 
         #some cleanup
-        $doc_string =~ s/\n/, /g;
-        $doc_string =~ s/, , /, /g;
-        $doc_string =~ s/\.,//g;
-        
+        $doc_string =~ s/\n+/ | /g;
+        $doc_string =~ s/\| +$//g;
+        $doc_string =~ s/,$/\./;
 	return $doc_string;
 }
 
