@@ -421,7 +421,7 @@ Sintaxis: contarle a nick tema
 =item debian
 
 Las funciones Debian
-debian search package_name 
+debian paquete rama package_name 
 debian version package_name 
 debian bug bug_number : Mostrar info respecto a ese bug 
 
