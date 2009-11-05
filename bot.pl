@@ -12,6 +12,7 @@ use Config::Simple;
 use Getopt::Std;
 use Pod::POM;
 use DBI;
+use POSIX qw(strftime);
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -126,10 +127,10 @@ sub on_public {
     $msg =~ s/\'//g;
     
    # print ouput to screen and also log it
-    my $ts = scalar localtime;
-    print " [$ts] <$nick:$channel> $msg\n";
+    my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
+    print " $ts <$nick:$channel> $msg\n";
 #chanlog
-    &chanlog(" [$ts] <$nick:$channel> $msg");
+    &chanlog("$ts  <$nick> $msg");
 # catch users correcting words
 # FIXME a user can not  correct himself in a priv channel, and
 # is worst if the floods comes to the main channel
