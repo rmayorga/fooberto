@@ -921,11 +921,19 @@ sub google {
             $answer = $result->uri;
         }
         else {
-            $answer = $search->error->reason;
+            if($search) {
+                my $error_g = $search->error;
+                if($error_g) {
+                    print $error_g->reason;#debug
+                    print $error_g->http_response->as_string;#debug
+                    print "^^^^ debug: google function error\n";#debug
+                    $answer="arrg ha ocurrido un error ¬¬";
+                } else {
+                    $answer="google no encuentra eso, O.o!";
+                }
+            }
         }
-    $answer = $answer;
         return $answer;
-       
 }
 
 =item fortune
