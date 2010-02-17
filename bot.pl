@@ -719,7 +719,7 @@ Sintaxis: urbano palabra
 =cut
 sub urbano {
 	my $msg = shift;
-	my $out;
+	my $out = "";
 	my $url = "http://www.urbandictionary.com/define.php?term=$msg";
 	my $page = get($url);
 	foreach (split ('<td>', $page))
