@@ -13,6 +13,9 @@ use Getopt::Std;
 use Pod::POM;
 use DBI;
 use POSIX qw(strftime);
+use LWP::Simple;
+use HTML::Entities;
+
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -348,6 +351,16 @@ sub on_public {
 			my $calen = `calendar | head -$crand  | tail -1`;
 			&say("$calen", $nick, $usenick, $priv);
 		}
+		elsif ($msg =~ s/^urbano//) {
+                   if (length($msg) >= 1) {
+                        my $out = &urbano($msg);
+                        if ($out) {
+                            &say("$out", $nick, $usenick, $priv);
+                        } else {
+                           &say("err, no encontre $msg", $nick, $usenick, $priv);
+                        }
+                   }
+                }
 		elsif ($msg =~ m/contarle\ a\ \w.+ acerca\ de/) {
 			$msg =~ s/contarle\ a\ //;
 			$msg =~ s/acerca\ de//;
@@ -698,6 +711,29 @@ sub authen {
 	}
 }
 
+=item urbano
+
+Definiciones de urbandictionary
+Sintaxis: urbano palabra
+
+=cut
+sub urbano {
+	my $msg = shift;
+	my $out;
+	my $url = "http://www.urbandictionary.com/define.php?term=$msg";
+	my $page = get($url);
+	foreach (split ('<td>', $page))
+	{
+        	if (/<div\sclass='definition'>
+        	        ([^>]*)
+        	        <\/div>/six)
+        	{
+        	        $out = "$1\n";
+        	}
+	}
+	$out = substr($out, 0, 199);
+	return $out;
+}
 
 =item corregir
 
