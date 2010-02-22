@@ -258,8 +258,8 @@ sub on_public {
 		elsif ($msg =~ s/^action//) {
 		   my $add;
 		   $msg =~ s/^\ +//g;
-		   if ($msg =~m/list/) { &actionlist($nick); $add = 'no'; }
-		   if ($msg =~s/^random//) { &actionlist($msg, $channel); $add = 'no'; } 
+		   if ($msg =~m/list/) { &actionlist($nick, $usenick, $priv); $add = 'no'; }
+		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; } 
 		   my $check = &checkauth($nick);
 		   if (($check) && (!$add))  {
 		   	if (length($msg) >= 1) {
@@ -580,7 +580,7 @@ action id_accion nick
 =cut
 
 sub actionlist {
-	my ($nick, $channel) = @_;; 
+	my ($nick, $usenick, $priv, $channel) = @_;; 
 	my $who = $nick; 
 	$who =~ s/^\w+ //;
 	my @rest;
@@ -594,7 +594,29 @@ sub actionlist {
 	for (1..$rnum) {
 		push (@rest , $sth->fetchrow);
 	}
-	&say ("@rest", "$nick", "no", "no") unless $channel; 
+
+        my $myString = "@rest";
+        my $myLength = length($myString);
+
+        if(($priv eq "yes") && ($myLength > 409)) {
+            #if is priv -> take care of show the complete list
+            my $myStart = 0;
+            my $myEnd = 0;
+            my $mySubString = "";
+
+            while($myStart < $myLength) {
+                $myEnd+=490;
+                $mySubString = substr($myString, $myStart, $myEnd);
+                &say ($mySubString, "$nick", $usenick, $priv) unless $channel;
+                $myStart = $myEnd;
+                $myStart++;
+            }
+        }
+        else {
+            #if is not priv -> just show the fist 409 characters
+            &say ("@rest", "$nick", $usenick, $priv) unless $channel;
+        }
+        
 	if ($channel) {
 		$nick =~ s/^\ //;
 		&faction("$nick", $channel, "$rest[int rand @rest] $nick");
