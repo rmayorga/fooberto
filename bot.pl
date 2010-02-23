@@ -259,8 +259,13 @@ sub on_public {
 		   my $add;
 		   $msg =~ s/^\ +//g;
 		   if ($msg =~m/list/) { &actionlist($nick, $usenick, $priv); $add = 'no'; }
-		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; } 
+		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; }
 		   my $check = &checkauth($nick);
+                   if (($check) && ($msg =~s/^olvidar//)) {
+                       $msg =~ s/\ +//g;
+                       &forgetaction($nick, $msg);
+                       $add = 'no';
+                   }
 		   if (($check) && (!$add))  {
 		   	if (length($msg) >= 1) {
 				&actionadd($msg, $nick)
@@ -575,7 +580,9 @@ sub checkignore {
 
 action list 
 action id_accion le_hace_algo_a NICK algo_mas 
-action id_accion nick 
+action id_accion nick
+action random nick
+action olvidar id_acccion
 
 =cut
 
@@ -605,15 +612,14 @@ sub actionlist {
             my $mySubString = "";
 
             while($myStart < $myLength) {
-                $myEnd+=490;
+                $myEnd+=409;
                 $mySubString = substr($myString, $myStart, $myEnd);
                 &say ($mySubString, "$nick", $usenick, $priv) unless $channel;
                 $myStart = $myEnd;
-                $myStart++;
             }
         }
         else {
-            #if is not priv -> just show the fist 409 characters
+            #if is not priv -> just show the fist 350 characters
             &say ("@rest", "$nick", $usenick, $priv) unless $channel;
         }
         
@@ -633,6 +639,16 @@ sub actionadd {
         my $sth = $dbh->prepare
            ("INSERT INTO actions (id, date, who, action) VALUES ('$actid', datetime('now','localtime'), '$nick', '$action')");
         $sth->execute();
+}
+
+sub forgetaction {
+	my ($nick, $daction) = @_;
+	my $sth = $dbh->prepare
+	    ("SELECT rowid from actions where id='$daction'");
+	$sth->execute();
+	my $row = $sth->fetchrow;
+	$dbh->do("DELETE from actions where rowid='$row'") unless ($nick eq $daction);
+
 }
 
 sub faction {
