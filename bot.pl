@@ -15,7 +15,7 @@ use DBI;
 use POSIX qw(strftime);
 use LWP::Simple;
 use HTML::Entities;
-
+use XML::Simple;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -366,6 +366,18 @@ sub on_public {
                         }
                    }
                 }
+		elsif ($msg =~ s/^temblor//){
+                        $msg =~ s/\ +//g;
+			if  (length($msg) >= 1) {
+				my $out = &temblor($msg);
+				if ($out) {
+					 &say("$out", $nick, $usenick, $priv);
+				}else {
+					&say("hmmm, ahí no ha temblado en los últimos 7 días", $nick, $usenick, $priv);
+				}
+			}
+
+		}
 		elsif ($msg =~ m/contarle\ a\ \w.+ acerca\ de/) {
 			$msg =~ s/contarle\ a\ //;
 			$msg =~ s/acerca\ de//;
@@ -772,6 +784,40 @@ sub urbano {
 	$out = substr($out, 0, 199);
 	return $out;
 }
+
+=item temblor
+
+Sacamos el dato de temblores de la pagina USGS
+Sintaxis: temblor pais
+
+=cut
+sub temblor {
+	my $msg = shift;
+	print "entrando\n";
+	#to lower case
+	$msg = lc($msg);
+	#to firt letter Uppper
+	$msg = ucfirst($msg);
+
+	my $out = "";
+	my $url= 'http://earthquake.usgs.gov/earthquakes/catalogs/7day-M2.5.xml';
+	# Retrieve the feed, or die gracefully
+	my $feed_to_parse = get ($url) or die "I can't get the feed you want";
+	# Parse the XML
+	my $parser = XML::Simple->new( );
+	my $rss = $parser->XMLin("$feed_to_parse");
+	foreach my $key (keys (%{$rss->{entry}})) {
+		if ($rss->{entry}->{$key}->{'title'} =~ m/$msg/){
+                    my $title = $rss->{entry}->{$key}->{'title'};
+                    my $date = $rss->{entry}->{$key}->{'updated'};
+                    $out = $out.$title." Updated ".$date;
+                    $out = $out.' | ';
+		}
+	}
+	$out = substr($out, 0, 199);
+	return $out;
+}
+
 
 =item corregir
 
