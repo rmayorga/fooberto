@@ -905,7 +905,12 @@ sub karmacatch {
 	my ($giver, $given) = @_;
 	my @k = ("$giver", ($given =~ m/(\+\+|--)/));
 	my $karma=0;
-	if ($given !~ m/$giver/i) { 
+
+        #sanitize variables
+        my $given_s = quotemeta($given);
+        my $giver_s = quotemeta($giver);
+
+        if ($given_s !~ m/$giver_s/i) {
 		$given =~ s/(\+\+|--)//;
 		push (@k, $given);
 	} else { return }
