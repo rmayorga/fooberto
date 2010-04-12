@@ -793,12 +793,11 @@ Sintaxis: temblor pais
 =cut
 sub temblor {
 	my $msg = shift;
-	print "entrando\n";
 	#to lower case
 	$msg = lc($msg);
 	#to firt letter Uppper
 	$msg = ucfirst($msg);
-
+        $msg = quotemeta($msg);
 	my $out = "";
 	my $url= 'http://earthquake.usgs.gov/earthquakes/catalogs/7day-M2.5.xml';
 	# Retrieve the feed, or die gracefully
