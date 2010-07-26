@@ -368,13 +368,11 @@ sub on_public {
                 }
 		elsif ($msg =~ s/^temblor//){
                         $msg =~ s/\ +//g;
-			if  (length($msg) >= 1) {
-				my $out = &temblor($msg);
-				if ($out) {
-					 &say("$out", $nick, $usenick, $priv);
-				}else {
-					&say("hmmm, ahí no ha temblado en los últimos 7 días", $nick, $usenick, $priv);
-				}
+			my $out = &temblor($msg);
+			if ($out) {
+				&say("$out", $nick, $usenick, $priv);
+			}else {
+				&say("hmmm, ahí no ha temblado en los últimos 7 días", $nick, $usenick, $priv);
 			}
 
 		}
@@ -769,49 +767,93 @@ Sintaxis: urbano palabra
 =cut
 sub urbano {
 	my $msg = shift;
+        my $ndy = "";      # ndy means Not defined yet, used as a flag for those non-existing definitions.
 	my $out = "";
 	my $url = "http://www.urbandictionary.com/define.php?term=$msg";
 	my $page = get($url);
-	foreach (split ('<td>', $page))
-	{
-        	if (/<div\sclass='definition'>
-        	        ([^>]*)
-        	        <\/div>/six)
-        	{
-        	        $out = "$1\n";
-        	}
-	}
-	$out = substr($out, 0, 199);
+        my @definitions = ();
+        foreach (split ('<td>', $page))
+        {
+                # Remove some garbage from the defitions
+                my $content =  $_;
+                $content =~ s/&\#39;/'/g;
+                $content =~ s/&quot;/\"/g;
+                $content =~ s/&amp;/&/g;
+                $content =~ s/&lt;/</g;
+                $content =~ s/&gt;/>/g;
+                $content =~ s/\r//g;
+                $content =~ s/<br>//g;
+                $content =~ s/<br\/>//g;
+                $content =~ s/<a.*?>//g;
+                $content =~ s/<\/a>//g;
+                $content =~ s/\n//g;
+                if ($content =~ /\'not_defined_yet\'/s)
+                {
+                        $ndy = "err, no existe pero me suena a: ";
+                }
+                if ($content =~ /<div\sclass='definition'>(.*?)<\/div>/s)
+                {
+                    push @definitions,$1;
+                }
+        }
+	$out = $ndy.substr($definitions[int rand @definitions],0,199);
 	return $out;
 }
 
 =item temblor
 
 Sacamos el dato de temblores de la pagina USGS
-Sintaxis: temblor pais
+Sintaxis: temblor [pais]
+Si el pais no se especifica, se devuelve el ultimo temblor registrado en el mundo.
 
 =cut
 sub temblor {
 	my $msg = shift;
-	#to lower case
-	$msg = lc($msg);
-	#to firt letter Uppper
-	$msg = ucfirst($msg);
-        $msg = quotemeta($msg);
+        my $url = "";
+	if  (length($msg) >= 1) {
+            #to lower case
+            $msg = lc($msg);
+            #to first letter Uppper
+            $msg = ucfirst($msg);
+            $msg = quotemeta($msg);
+            $url= 'http://earthquake.usgs.gov/earthquakes/catalogs/7day-M2.5.xml';
+	}
+        else
+	{
+            # I just need the XML with the latest earthquakes (last day)
+            $url= 'http://earthquake.usgs.gov/earthquakes/catalogs/1day-M2.5.xml';
+	}
 	my $out = "";
-	my $url= 'http://earthquake.usgs.gov/earthquakes/catalogs/7day-M2.5.xml';
 	# Retrieve the feed, or die gracefully
 	my $feed_to_parse = get ($url) or die "I can't get the feed you want";
 	# Parse the XML
 	my $parser = XML::Simple->new( );
 	my $rss = $parser->XMLin("$feed_to_parse");
-	foreach my $key (keys (%{$rss->{entry}})) {
-		if ($rss->{entry}->{$key}->{'title'} =~ m/$msg/){
-                    my $title = $rss->{entry}->{$key}->{'title'};
-                    my $date = $rss->{entry}->{$key}->{'updated'};
-                    $out = $out.$title." Updated ".$date;
-                    $out = $out.' | ';
+
+	if  (length($msg) >= 1)
+	{
+		foreach my $key (keys (%{$rss->{entry}}))
+		{
+			if ($rss->{entry}->{$key}->{'title'} =~ m/$msg/)
+			{
+                            my $title = $rss->{entry}->{$key}->{'title'};
+                            my $date = $rss->{entry}->{$key}->{'updated'};
+                            $out = $out.$title." Updated ".$date;
+                            $out = $out.' || ';
+                        }
 		}
+	}
+	else
+	{
+            foreach my $key (sort (keys (%{$rss->{entry}})))
+            {
+                # The idea inside this loop is ignore all entries, but the last one
+                # which is the latest earthquake registered and still stored in $out when the loop finished.
+                $out = "";
+                my $title = $rss->{entry}->{$key}->{'title'};
+                my $date = $rss->{entry}->{$key}->{'updated'};
+                $out = $title." on ".$date;
+            }
 	}
 	$out = substr($out, 0, 199);
 	return $out;
