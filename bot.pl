@@ -793,8 +793,12 @@ sub urbano {
                 }
                 if ($content =~ /<div\sclass='definition'>(.*?)<\/div>/s)
                 {
-                    push @definitions,$1;
+			push @definitions,$1;
                 }
+        }
+        if (@definitions == 0)
+        {
+            return $out;
         }
 	$out = $ndy.substr($definitions[int rand @definitions],0,199);
 	return $out;
@@ -845,15 +849,10 @@ sub temblor {
 	}
 	else
 	{
-            foreach my $key (sort (keys (%{$rss->{entry}})))
-            {
-                # The idea inside this loop is ignore all entries, but the last one
-                # which is the latest earthquake registered and still stored in $out when the loop finished.
-                $out = "";
-                my $title = $rss->{entry}->{$key}->{'title'};
-                my $date = $rss->{entry}->{$key}->{'updated'};
-                $out = $title." on ".$date;
-            }
+		if ($feed_to_parse =~ /<entry><id>.*?<\/id><title>(.*?)<\/title><updated>(.*?)<\/updated>/s)
+                {
+                    $out = "Ultimo temblor: ".$1." ".$2;
+                }
 	}
 	$out = substr($out, 0, 199);
 	return $out;
