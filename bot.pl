@@ -149,6 +149,8 @@ sub on_public {
 
 # karma catcher
     &karmacatch($nick, $msg);
+# pipian level catcher
+    &pipiancatch($nick, $msg);
     # capture command char (also this should go on the config file)
 
     if ( ($msg =~ m/^$bconf{$bcomm}/) || ($msg =~ m/^$bconf{$bnick}(,|;|:).+/ ) || ($channel eq $bconf{$bnick}) ) {
@@ -221,6 +223,26 @@ sub on_public {
 			    } elsif ( $karma == 0 ) { &say("creo que $msg es _neutral_ , $karma", $nick, $usenick, $priv); }
 			} 
 		   }
+		}
+		elsif ($msg =~ m/^pipianometro/){
+		    $msg =~ m/^pipianometro\s+(\w+)/;
+		    my $searchnick = $1;
+		    my @seen = &dbuexist($searchnick);
+		    if ($seen[0]) {
+			my $pipianlvl = &getpipianlvl($searchnick);
+			if ($pipianlvl == 0){
+			    &say("ese tal $searchnick no anda en cosas raras, lvl: 0", $nick, $usenick, $priv);
+			}elsif ($pipianlvl > 0 && $pipianlvl <=3){
+			    &say("diría que a $searchnick mas de alguna vez se la ha salido una pipianada, lvl$pipianlvl+", $nick, $usenick, $priv);
+			}elsif ($pipianlvl > 3){
+			    &say("Este $searchnick es un maricon sin remedio, lvl$pipianlvl+", $nick, $usenick, $priv);
+			}
+		    }else{
+			&say("Ergg aún no conozco ese lado de $searchnick, no me preguntes.", $nick, $usenick, $priv);
+		    }
+
+#	&say("ese tal $searchnick es un pipian de nivel: $pipianlvl", $nick, $usenick, $priv);
+#		    }
 		}
 		elsif ($msg =~ m/^aprender que.+es.+/i) {
 		   $msg =~ s/aprender//i;
@@ -1123,6 +1145,39 @@ sub say {
 		$irc->yield( privmsg => $channel, "$msg");
 	}
 	return
+}
+
+sub pipiancatch {
+    my ($giver, $msg) = @_;
+    $msg =~ m/(\w+)(,|;|:)\s+(pipian\+\+)/;
+    my ($given, $action) = ($1, $3);
+    my $pipianlvl = 0;
+    my $creepy = $given if ( &dbuexist($given) );
+    if ($creepy) {
+	my $sth = $dbh->prepare
+	    ("SELECT pipianlvl from users where NICK='$creepy'");
+	$sth->execute();
+	my $row = $sth->fetchrow;
+	if ( $action =~ m/pipian\+\+/ ){
+	    $row++;
+	} 
+	$dbh->do("UPDATE users SET pipianlvl='$row' WHERE nick='$creepy'");
+    }
+}
+
+=item pipianometro
+
+Sintaxis: pipianometro nick
+
+=cut
+
+sub getpipianlvl {
+    my $nick = shift;
+    my $sth = $dbh->prepare
+	("SELECT pipianlvl from users where NICK='$nick'");
+    $sth->execute();
+    my $row = $sth->fetchrow;
+    return $row;
 }
 
 sub doaction {
