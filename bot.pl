@@ -762,6 +762,12 @@ sub pipiancatch {
     }
 }
 
+=item pipianometro
+
+Sintaxis: pipianometro nick
+
+=cut
+
 sub getpipianlvl {
     my $nick = shift;
     my $sth = $dbh->prepare
