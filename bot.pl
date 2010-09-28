@@ -424,7 +424,7 @@ sub on_public {
 		}
 		elsif ($msg =~ m/^identica pull/) {
 		    my ($user, $dent) = &identica_pull();
-		    if ($user && $dent){
+		    if ($user){
 			&say("En identica $user dijo: $dent", $nick, $usenick, $priv);
 		    }else{
 			&say("Ergg un error en Identi.ca seguramente :\\", $nick, $usenick, $priv);
