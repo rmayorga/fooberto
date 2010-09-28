@@ -116,7 +116,7 @@ sub bot_start{
 }
 
 # Creating object to manage Identi.ca API
-my $identica = Net::Identica->new(username => $bconf{$biuser}, password => $bconf{$bipass}, source => '');
+my $identica = Net::Identica->new(username => $bconf{$biuser}, password => $bconf{$bipass}, source => '', traits => [qw/ WrapError/]);
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
@@ -1214,8 +1214,7 @@ sub identica_say {
     my $size = length($message);
     print $size;
     if ($size <= 140){
-	$identica->update("$message");
-	return $message;
+	return $message if $identica->update("$message");
     }else{
 	return undef;
     }
