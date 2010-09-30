@@ -116,7 +116,7 @@ sub bot_start{
 }
 
 # Creating object to manage Identi.ca API
-my $identica = Net::Identica->new(username => $bconf{$biuser}, password => $bconf{$bipass}, source => '', traits => [qw/ WrapError/]);
+my $identica = Net::Identica->new(username => $bconf{$biuser}, password => $bconf{$bipass}, source => '', traits => [qw/ WrapError /]);
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
@@ -420,14 +420,14 @@ sub on_public {
 		elsif ($msg =~ m/^identica say (.+)/) {
 		    chomp($1);
 		    my $text = &identica_say($1);
-		    &say("*Info*: les informo que $nick dijo en identica: $text", $nick, $usenick, 'no') if $text;
+		    &say("*Info*: les informo que $nick dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
 		}
 		elsif ($msg =~ m/^identica pull/) {
 		    my ($user, $dent) = &identica_pull();
 		    if ($user){
-			&say("En identica $user dijo: $dent", $nick, $usenick, $priv);
+			&say("En identi.ca $user dijo: $dent", $nick, $usenick, $priv);
 		    }else{
-			&say("Ergg un error en Identi.ca seguramente :\\", $nick, $usenick, $priv);
+			&say("Ergg un error en identi.ca seguramente :\\", $nick, $usenick, $priv);
 		    }
 		}
                 elsif ($msg =~ s/^help//) {
