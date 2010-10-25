@@ -16,6 +16,8 @@ use POSIX qw(strftime);
 use LWP::Simple;
 use HTML::Entities;
 use XML::Simple;
+use Net::Identica;
+use Encode;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -78,6 +80,9 @@ my $debbranch = "DEBIAN.branches";
 my $bgkey = "BOT.google_key";
 my $bgreferer = "BOT.google_referer";
 
+# and even more ugly options
+my $biuser = "IDENTICA.user";
+my $bipass = "IDENTICA.pass";
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -109,6 +114,9 @@ sub bot_start{
           }
     );
 }
+
+# Creating object to manage Identi.ca API
+my $identica = Net::Identica->new(username => $bconf{$biuser}, password => $bconf{$bipass}, source => '', traits => [qw/ WrapError /]);
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
@@ -409,6 +417,19 @@ sub on_public {
 			$target =~ s/\ +$//;
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
+		}
+		elsif ($msg =~ m/^identica say (.+)/) {
+		    chomp($1);
+		    my $text = &identica_say($1);
+		    &say("*Info*: les informo que $nick dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
+		}
+		elsif ($msg =~ m/^identica pull/) {
+		    my ($user, $dent) = &identica_pull();
+		    if ($user){
+			&say("En identi.ca $user dijo: $dent", $nick, $usenick, $priv);
+		    }else{
+			&say("Ergg un error en identi.ca seguramente :\\", $nick, $usenick, $priv);
+		    }
 		}
                 elsif ($msg =~ s/^help//) {
                    $msg =~ s/\ +//g;
@@ -1233,6 +1254,36 @@ sub getpipianlvl {
     $sth->execute();
     my $row = $sth->fetchrow;
     return $row;
+}
+
+=item identica
+
+Las funciones de Identica
+identica say mensaje
+identica pull
+
+=cut
+
+sub identica_say {
+    my ($message) = @_;
+    my $size = length($message);
+    print $size;
+    if ($size <= 140){
+	return $message if $identica->update("$message");
+    }else{
+	return undef;
+    }
+}
+
+sub identica_pull {
+    my $fetch = $identica->home_timeline;
+    my $last_status = shift( @$fetch );
+    if ($last_status) {
+	my $dent = encode("utf-8", ${$last_status}{"text"});
+	return (${$last_status}{user}{"screen_name"}, $dent);
+    }else{
+	return undef;
+    }
 }
 
 sub doaction {
