@@ -282,7 +282,6 @@ sub on_public {
 		   $msg =~ s/^\ +//g;
 		   if ($msg =~m/list/) { &actionlist($nick, $usenick, $priv); $add = 'no'; }
 		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; }
-		   if ($msg =~s/^search//) { &actionsearch($msg, $usenick, $priv, $channel,$msg); $add = 'no'; }
 		   my $check = &checkauth($nick);
                    if (($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
@@ -616,8 +615,7 @@ action id_accion le_hace_algo_a NICK algo_mas
 action id_accion nick
 action random nick
 action olvidar id_acccion
-action search cadena
-    
+
 =cut
 
 sub actionlist {
@@ -679,7 +677,7 @@ sub forgetaction {
 	my ($nick, $daction) = @_;
 	my $sth = $dbh->prepare
 	    ("SELECT rowid from actions where id='$daction'");
-p	$sth->execute();
+	$sth->execute();
 	my $row = $sth->fetchrow;
 	$dbh->do("DELETE from actions where rowid='$row'") unless ($nick eq $daction);
 
@@ -706,59 +704,6 @@ sub faction {
 	} else { return undef }
 
 }
-
-
-sub actionsearch {
-    my ($nick, $usenick, $priv, $channel,$msg) = @_;;
-    my $who = $nick;
-    $msg =~s/\s//;
-    my $searchSt = $msg;
-    $who =~ s/^\w+ //;
-    my @rest;
-
-    if(!($searchSt cmp '')){ return  ;}
-
-    my $sth = $dbh->prepare("SELECT COUNT(id) from actions where id like ('%$searchSt%') or action like ('%$searchSt%') ");
-
-    $sth->execute();
-    my $rnum = $sth->fetchrow();
-    $sth = $dbh->prepare("SELECT id from actions where id like ('%$searchSt%') or action like ('%$searchSt%') ");
-
-    $sth->execute();
-    for (1..$rnum) {
-	push (@rest , $sth->fetchrow);
-    }
-
-    my $myString = "@rest";
-    my $myLength = length($myString);
-
-    if(($priv eq "yes") && ($myLength > 409)) {
-	            #if is priv -> take care of show the complete list
-	my $myStart = 0;
-	my $myEnd = 0;
-	my $mySubString = "";
-
-	while($myStart < $myLength) {
-	    $myEnd+=409;
-	    $mySubString = substr($myString, $myStart, $myEnd);
-	    &say ($mySubString, "$nick", $usenick, $priv) unless $channel;
-	    $myStart = $myEnd;
-	}
-    }
-    else {
-	            #if is not priv -> just show the fist 350 characters
-	&say ($myString, "$nick", $usenick, $priv) ;
-	#    &say ("@rest", "$nick", $usenick, $priv) unless $channel;
-    }
-
-    if ($channel) {
-	$nick =~ s/^\ //;
-	&faction("$nick", $channel, "$rest[int rand @rest] $nick");
-    }
-
-
-}
-
 
 =item quote
 
