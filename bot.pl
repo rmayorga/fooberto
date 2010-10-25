@@ -115,8 +115,16 @@ sub bot_start{
     );
 }
 
-# Creating object to manage Identi.ca API
-my $identica = Net::Identica->new(username => $bconf{$biuser}, password => $bconf{$bipass}, source => '', traits => [qw/ WrapError /]);
+# Creating object to manage Identi.ca API if configuration variables exist
+my $identica;
+if (defined ($biuser && $bipass)) {
+    $identica = Net::Identica->new(
+	    username => $bconf{$biuser},
+	    password => $bconf{$bipass}, 
+	    source => '', 
+	    traits => [qw/ WrapError /]);
+    $identica = undef unless $identica->verify_credentials;
+} else { $identica = undef; }
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
@@ -419,15 +427,23 @@ sub on_public {
 		}
 		elsif ($msg =~ m/^identica say (.+)/) {
 		    chomp($1);
-		    my $text = &identica_say($1);
-		    &say("*Info*: les informo que $nick dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
+		    if ($identica) {
+			my $text = &identica_say($1);
+			&say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
+		    } else {
+			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
+		    }
 		}
 		elsif ($msg =~ m/^identica pull/) {
-		    my ($user, $dent) = &identica_pull();
-		    if ($user){
-			&say("En identi.ca $user dijo: $dent", $nick, $usenick, $priv);
-		    }else{
-			&say("Ergg un error en identi.ca seguramente :\\", $nick, $usenick, $priv);
+		    if ($identica) {
+			my ($user, $dent) = &identica_pull();
+			if ($user){
+			    &say("en identi.ca \@$user dijo: $dent", $nick, $usenick, $priv);
+			} else {
+			    &say("ergg un error con mi conexion a identi.ca seguramente :\\", $nick, $usenick, $priv);
+			}
+		    } else {
+			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
 		}
                 elsif ($msg =~ s/^help//) {
