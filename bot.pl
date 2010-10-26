@@ -16,6 +16,8 @@ use POSIX qw(strftime);
 use LWP::Simple;
 use HTML::Entities;
 use XML::Simple;
+use Net::Identica;
+use Encode;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -78,6 +80,9 @@ my $debbranch = "DEBIAN.branches";
 my $bgkey = "BOT.google_key";
 my $bgreferer = "BOT.google_referer";
 
+# and even more ugly options
+my $biuser = "IDENTICA.user";
+my $bipass = "IDENTICA.pass";
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -109,6 +114,17 @@ sub bot_start{
           }
     );
 }
+
+# Creating object to manage Identi.ca API if configuration variables exist
+my $identica;
+if (defined ($biuser && $bipass)) {
+    $identica = Net::Identica->new(
+	    username => $bconf{$biuser},
+	    password => $bconf{$bipass}, 
+	    source => '', 
+	    traits => [qw/ WrapError /]);
+    $identica = undef unless $identica->verify_credentials;
+} else { $identica = undef; }
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
@@ -408,6 +424,37 @@ sub on_public {
 			$target =~ s/\ +$//;
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
+		}
+		elsif ($msg =~ m/^identica say (.+)/) {
+		    chomp($1);
+		    if ($identica) {
+			my $text = &identica_say($1);
+			&say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
+		    } else {
+			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
+		    }
+		}
+		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
+		    chomp($1) if defined $1;
+		    if ($identica) {
+			my ($user, $dent);
+			if ($1) {
+			    ($user, $dent) = &identica_pull($1); 
+			} else { 
+			    ($user, $dent) = &identica_pull();
+			}
+			if ($user && $dent){
+			    &say("en identi.ca \@$user dijo: $dent", $nick, $usenick, $priv);
+			} else {
+			    unless ($dent) {
+				&say("probablemente el usuario \@$user no este registrado en identi.ca :D", $nick, $usenick, $priv);
+			    } else {
+				&say("ergg un error con mi conexion a identi.ca seguramente :\\", $nick, $usenick, $priv);
+			    }
+			}
+		    } else {
+			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
+		    }
 		}
                 elsif ($msg =~ s/^help//) {
                    $msg =~ s/\ +//g;
@@ -1178,6 +1225,44 @@ sub getpipianlvl {
     $sth->execute();
     my $row = $sth->fetchrow;
     return $row;
+}
+
+=item identica
+
+Las funciones de Identica
+identica say mensaje
+identica pull | identica pull foo
+
+=cut
+
+sub identica_say {
+    my ($message) = @_;
+    my $size = length($message);
+    if ($size <= 140){
+	$message = decode("utf-8", $message);
+	return $message if $identica->update("$message");
+    }else{
+	return undef;
+    }
+}
+
+sub identica_pull {
+    my $nick = shift @_;
+    if ($nick) {
+	my $fetch = $identica->user_timeline({screen_name => $nick});
+	my $last_status = shift( @$fetch );
+	if ($last_status) {
+	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    return (${$last_status}{user}{"screen_name"}, $dent);
+	} else { return ($nick, undef); }
+    } else {
+	my $fetch = $identica->home_timeline;
+	my $last_status = shift( @$fetch );
+	if ($last_status) {
+	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    return (${$last_status}{user}{"screen_name"}, $dent);
+	} else { return (undef, undef); }
+    }
 }
 
 sub doaction {
