@@ -434,13 +434,23 @@ sub on_public {
 			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
 		}
-		elsif ($msg =~ m/^identica pull/) {
+		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
+		    chomp($1) if defined $1;
 		    if ($identica) {
-			my ($user, $dent) = &identica_pull();
-			if ($user){
+			my ($user, $dent);
+			if ($1) {
+			    ($user, $dent) = &identica_pull($1); 
+			} else { 
+			    ($user, $dent) = &identica_pull();
+			}
+			if ($user && $dent){
 			    &say("en identi.ca \@$user dijo: $dent", $nick, $usenick, $priv);
 			} else {
-			    &say("ergg un error con mi conexion a identi.ca seguramente :\\", $nick, $usenick, $priv);
+			    unless ($dent) {
+				&say("probablemente el usuario \@$user no este registrado en identi.ca :D", $nick, $usenick, $priv);
+			    } else {
+				&say("ergg un error con mi conexion a identi.ca seguramente :\\", $nick, $usenick, $priv);
+			    }
 			}
 		    } else {
 			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
@@ -1221,14 +1231,13 @@ sub getpipianlvl {
 
 Las funciones de Identica
 identica say mensaje
-identica pull
+identica pull | identica pull foo
 
 =cut
 
 sub identica_say {
     my ($message) = @_;
     my $size = length($message);
-    print $size;
     if ($size <= 140){
 	$message = decode("utf-8", $message);
 	return $message if $identica->update("$message");
@@ -1238,13 +1247,21 @@ sub identica_say {
 }
 
 sub identica_pull {
-    my $fetch = $identica->home_timeline;
-    my $last_status = shift( @$fetch );
-    if ($last_status) {
-	my $dent = encode("utf-8", ${$last_status}{"text"});
-	return (${$last_status}{user}{"screen_name"}, $dent);
-    }else{
-	return undef;
+    my $nick = shift @_;
+    if ($nick) {
+	my $fetch = $identica->user_timeline({screen_name => $nick});
+	my $last_status = shift( @$fetch );
+	if ($last_status) {
+	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    return (${$last_status}{user}{"screen_name"}, $dent);
+	} else { return ($nick, undef); }
+    } else {
+	my $fetch = $identica->home_timeline;
+	my $last_status = shift( @$fetch );
+	if ($last_status) {
+	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    return (${$last_status}{user}{"screen_name"}, $dent);
+	} else { return (undef, undef); }
     }
 }
 
