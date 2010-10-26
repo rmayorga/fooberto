@@ -1230,6 +1230,7 @@ sub identica_say {
     my $size = length($message);
     print $size;
     if ($size <= 140){
+	$message = decode("utf-8", $message);
 	return $message if $identica->update("$message");
     }else{
 	return undef;
