@@ -4,7 +4,7 @@ use strict;
 use integer;
 use POE;
 use POE::Component::IRC;
-use Net::Google; #thiw was replaced by Google::search /jmas
+#use Net::Google; #thiw was replaced by Google::search /jmas
 use Google::Search;
 use SOAP::Lite;
 use WWW::Wikipedia;
@@ -290,7 +290,7 @@ sub on_public {
 		   $msg =~ s/^\ +//g;
 		   if ($msg =~m/list/) { &actionlist($nick, $usenick, $priv); $add = 'no'; }
 		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; }
-		   if ($msg =~s/^search//) { &actionsearch($msg, $usenick, $priv, $channel,$msg); $add = 'no'; }
+		   if ($msg =~s/^search//) { &actionsearch($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 		   my $check = &checkauth($nick);
                    if (($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
@@ -731,10 +731,9 @@ sub faction {
 
 sub actionsearch {
     my ($nick, $usenick, $priv, $channel,$msg) = @_;;
-    my $who = $nick;
+
     $msg =~s/\s//;
     my $searchSt = $msg;
-    $who =~ s/^\w+ //;
     my @rest;
 
     if(!($searchSt cmp '')){ return  ;}
@@ -772,10 +771,10 @@ sub actionsearch {
 	#    &say ("@rest", "$nick", $usenick, $priv) unless $channel;
     }
 
-    if ($channel) {
-	$nick =~ s/^\ //;
-	&faction("$nick", $channel, "$rest[int rand @rest] $nick");
-    }
+    # if ($channel) {
+    # 	$nick =~ s/^\ //;
+    # 	&faction("$nick", $channel, "$rest[int rand @rest] $nick");
+    # }
 
 
 }
