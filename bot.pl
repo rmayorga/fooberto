@@ -93,7 +93,8 @@ POE::Session->create(
         _start     => \&bot_start,
         irc_001    => \&on_connect,
         irc_public => \&on_public,
-	irc_msg    => \&on_public, 
+	irc_msg    => \&on_public,
+        irc_notice    => \&on_notice, 
     },
 );
 
@@ -435,6 +436,11 @@ sub on_public {
 			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
 		}
+                elsif ($msg =~ s/^admin//) {
+                    #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
+                    #checking with NickServ
+                    $irc->yield( privmsg => "NickServ", "ACC $nick");
+		}
 		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
 		    chomp($1) if defined $1;
 		    if ($identica) {
@@ -484,6 +490,35 @@ sub on_public {
 	}
     }
 
+}
+
+sub on_notice{
+    my ( $kernel, $who, $where, $msg ) = @_[ KERNEL, ARG0, ARG1, ARG2 ];
+    my $nick = ( split /!/, $who )[0];
+    my $channel = $where->[0];
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+    $msg = $dbh->quote($msg);
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+    $msg =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+
+    my @answer = split(/\s+/, $msg);
+
+    #is this an answer to a ACC request to nickserv? (admin comand)
+    if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
+    {
+        if($answer[2] == 3){
+            &say("$answer[0]: has sido autenticado.", $answer[0], 'no', 'no');
+            #Her do whatever it takes to mark this nick has identified
+        }
+        else{
+            &say("$answer[0]: ergg no te has autenticado con NickServ.", $answer[0], 'no', 'no');
+        }
+    }
 }
 
 sub sayto {
