@@ -18,6 +18,7 @@ use HTML::Entities;
 use XML::Simple;
 use Net::Identica;
 use Encode;
+use POSIX;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
