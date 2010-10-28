@@ -436,10 +436,20 @@ sub on_public {
 			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
 		}
-                elsif ($msg =~ s/^admin//) {
+                elsif ($msg =~ s/^nickserv//) {
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
-                    #checking with NickServ
-                    $irc->yield( privmsg => "NickServ", "ACC $nick");
+
+                    $msg =~ s/^\ +//g;
+		   if (length($msg) >= 1) {
+                       my @seen = &dbuexist($msg);
+                       if ($seen[0]) {
+                           $irc->yield( privmsg => "NickServ", "ACC $msg");
+                       }
+                   }
+                    else{
+                        #checking with NickServ
+                        $irc->yield( privmsg => "NickServ", "ACC $nick");
+                    }
 		}
 		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
 		    chomp($1) if defined $1;
@@ -512,11 +522,11 @@ sub on_notice{
     if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
     {
         if($answer[2] == 3){
-            &say("$answer[0]: has sido autenticado.", $answer[0], 'no', 'no');
-            #Her do whatever it takes to mark this nick has identified
+            &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
+            #Here you should do whatever it takes to mark this nick has identified
         }
         else{
-            &say("$answer[0]: ergg no te has autenticado con NickServ.", $answer[0], 'no', 'no');
+            &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
         }
     }
 }
