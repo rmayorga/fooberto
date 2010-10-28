@@ -1521,10 +1521,9 @@ sub chanlog {
 
 =item ruleta
 
-Las funciones de Identica
-cargar 
-disparar
+Las funciones de ruleta son
 ruleta status
+
 =cut
 
 sub kick {
