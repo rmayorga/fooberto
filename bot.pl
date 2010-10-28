@@ -1477,7 +1477,7 @@ identica pull | identica pull foo
 sub identica_say {
     my ($message,$nick) = @_;
 
-    $message = $message." (enviado por \@$nick)";
+    $message = $message." (vía \@$nick)";
     my $size = length($message);
     if ($size <= 140){
 	$message = decode("utf-8", $message);
