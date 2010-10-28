@@ -446,6 +446,8 @@ sub on_public {
                         } else {
                             &say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
                         }
+                        #de-autenticate user (nickserv)
+                        &forgetNickServ($nick);
                     }
 		}
                 elsif ($msg =~ s/^nickserv//) {
@@ -945,6 +947,12 @@ sub checkNickServ {
     return undef;
 }
 
+sub forgetNickServ {
+    my $nick = shift;
+    $hashNicks{ $nick } = 0;
+}
+
+
 sub authen {
 	my ($nick, $gpass) = @_;
 	my $sth = $dbh->prepare
@@ -1369,7 +1377,7 @@ identica pull | identica pull foo
 sub identica_say {
     my ($message,$nick) = @_;
 
-    $message = $message." (enviado por $nick)";
+    $message = $message." (enviado por \@$nick)";
     my $size = length($message);
     if ($size <= 140){
 	$message = decode("utf-8", $message);
