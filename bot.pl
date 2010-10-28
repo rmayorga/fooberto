@@ -106,6 +106,7 @@ POE::Session->create(
 	irc_msg    => \&on_public,
         irc_notice    => \&on_notice,
         irc_join    => \&on_join,
+        irc_nick    => \&on_nick,
     },
 );
 
@@ -585,7 +586,7 @@ sub on_notice{
                 $printOrSay = 0; #say it in the channel only once
             }
             else {
-                print "$answer[0] se ha autenticado.";
+                print "$answer[0] se ha autenticado.\n";
             }
             #Here you should do whatever it takes to mark this nick has identified
             $hashNicks{ $answer[0] } = 1;#autenticated
@@ -596,7 +597,7 @@ sub on_notice{
                $printOrSay = 0; #say it in the channel only once
            }
            else {
-               print "ergg! $answer[0] no se ha autenticado con NickServ.";
+               print "ergg! $answer[0] no se ha autenticado con NickServ.\n";
            }
                $hashNicks{ $answer[0] } = 0;#NOT autenticated
         }
@@ -606,7 +607,7 @@ sub on_notice{
 sub on_join{
     my ( $kernel, $who, $where ) = @_[ KERNEL, ARG0, ARG1 ];
     my $nick = ( split /!/, $who )[0];
-    my $channel = $where->[0];
+    my $channel = $where;
 
     #sanitize variables
     $nick = $dbh->quote($nick);
@@ -617,6 +618,26 @@ sub on_join{
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
 
     &requestNickServ($nick);
+}
+
+#Sent whenever you, or someone around you, changes nicks.
+sub on_nick{
+    my ( $kernel, $who, $newWho ) = @_[ KERNEL, ARG0, ARG1 ];
+    my $oldNick = ( split /!/, $who )[0];
+    my $newNick = ( split /!/, $newWho )[0];
+    
+
+    #sanitize variables
+    $newNick = $dbh->quote($newNick);
+    $oldNick = $dbh->quote($oldNick);
+
+    #take off apostrofes. This will be added by each insert comand.
+    $oldNick =~ s/\'//g;
+    $newNick =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    &forgetNickServ($oldNick);
+    &requestNickServ($newNick);
 }
 
 sub sayto {
@@ -1008,6 +1029,9 @@ sub checkauth {
 #check if user is identified (nickserv)
 sub requestNickServ {
     my $nick = shift;
+
+    &forgetNickServ($nick);
+    
     $irc->yield( privmsg => "NickServ", "ACC $nick");
 }
 #only for freenode
