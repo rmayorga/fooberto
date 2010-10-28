@@ -84,6 +84,9 @@ my $bgreferer = "BOT.google_referer";
 my $biuser = "IDENTICA.user";
 my $bipass = "IDENTICA.pass";
 
+# ugly array to track nickserv identified nicks
+my %hashNicks = ();
+
 sub CHANNEL () { "$bconf{$bchan}" }
 
 my ($irc) = POE::Component::IRC->spawn();
@@ -429,12 +432,21 @@ sub on_public {
 		}
 		elsif ($msg =~ m/^identica say (.+)/) {
 		    chomp($1);
-		    if ($identica) {
-			my $text = &identica_say($1);
-			&say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
-		    } else {
-			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
-		    }
+
+                    my $check = &checkauth($nick);#check if it is an authorized user
+                    my $checkNick = &checkNickServ($nick);#check if the nick is identified
+
+                    #print "is $nick an authorized user?: $check\n";#debug
+                    
+                    if( ($check) && ($checkNick) )
+                    {
+                        if ($identica) {
+                            my $text = &identica_say($1,$nick);
+                            &say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
+                        } else {
+                            &say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
+                        }
+                    }
 		}
                 elsif ($msg =~ s/^nickserv//) {
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
@@ -524,9 +536,11 @@ sub on_notice{
         if($answer[2] == 3){
             &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
             #Here you should do whatever it takes to mark this nick has identified
+            $hashNicks{ $answer[0] } = 1;#autenticated
         }
         else{
             &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
+            $hashNicks{ $answer[0] } = 0;#NOT autenticated
         }
     }
 }
@@ -910,6 +924,20 @@ sub checkauth {
 	$sth->execute();
 	my $ok = $sth->fetchrow;
 	if ($ok) { return "ok" } else { return undef }
+}
+
+#check if user is identified (nickserv)
+#only for freenode
+sub checkNickServ {
+    my $nick = shift;
+    if(defined($hashNicks{ $nick })){
+        if($hashNicks{ $nick } == 1){
+            #print "$nick esta Identificado con Nickserv\n";#debug
+            return "ok";
+        }
+    }
+    #print "$nick NO esta Identificado con Nickserv\n";#debug
+    return undef;
 }
 
 sub authen {
@@ -1334,7 +1362,9 @@ identica pull | identica pull foo
 =cut
 
 sub identica_say {
-    my ($message) = @_;
+    my ($message,$nick) = @_;
+
+    $message = $message." (enviado por $nick)";
     my $size = length($message);
     if ($size <= 140){
 	$message = decode("utf-8", $message);
