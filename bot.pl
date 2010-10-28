@@ -84,6 +84,12 @@ my $bgreferer = "BOT.google_referer";
 my $biuser = "IDENTICA.user";
 my $bipass = "IDENTICA.pass";
 
+# unnecesary but funny options
+my @jugadores;
+my $cargada=0;
+my $contRul=-1;
+my $indRul;
+
 # ugly array to track nickserv identified nicks
 my %hashNicks = ();
 
@@ -486,6 +492,42 @@ sub on_public {
 		    } else {
 			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
+		}
+		elsif($msg =~ s/^cargar//) {
+		    push(@jugadores,$nick);
+		    my $a = "@jugadores";
+		        #print $a."\n";
+		    $contRul++;
+		    return;
+		}
+		elsif($msg =~ s/^disparar//) {
+		    my $encontrado=0;
+		        foreach my $jug (@jugadores)
+			{
+			    if($jug cmp $nick){
+				$encontrado =1;}
+			}
+		    if($encontrado==0){&kick("plomazo en la shola por troll hijo de puta",$nick, $usenick, $priv); return;}
+
+		    my $numero = $#jugadores;
+		    if($numero<=0){&kick("plomazo en la shola troll hijo de puta",$nick, $usenick, $priv); return;}
+
+		    if($cargada==0){
+			$indRul = floor(rand($numero));
+			$cargada=1;
+		    }
+		    if($contRul==$indRul){
+			@jugadores = ("");
+			$cargada = 0;
+			$contRul = -1;
+			&kick("Subiendo las fotos a 4chan de tus sesos esparcidos ",$nick, $usenick, $priv);
+		    }
+		    else { &say("Escucha el sonido del martillo en la recÃara",$nick,$usenick,$priv); $contRul=$contRul-1;}
+
+		    return;
+		}elsif($msg =~ s/^ruleta status//) {
+		    my $cargados = "@jugadores";
+		    &say("madafakas cargados $cargados ",$nick,$usenick,$priv);
 		}
                 elsif ($msg =~ s/^help//) {
                    $msg =~ s/\ +//g;
@@ -1417,6 +1459,24 @@ sub chanlog {
 	print LOG "$logme\n";
 	close(LOG)
 }
+
+=item ruleta
+
+Las funciones de Identica
+cargar 
+disparar
+ruleta status
+=cut
+
+sub kick {
+    my ($msg, $nick, $usenick, $priv ) = @_;
+    my $channel = $bconf{$bchan};
+
+    $irc->yield( kick => $channel => $nick => $msg);
+
+    return
+}
+
 
 =item help
 
