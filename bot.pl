@@ -92,6 +92,7 @@ my $indRul;
 
 # ugly array to track nickserv identified nicks
 my %hashNicks = ();
+my $printOrSay = 0; #0 print it for debug. 1 say it in the channel
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -103,7 +104,8 @@ POE::Session->create(
         irc_001    => \&on_connect,
         irc_public => \&on_public,
 	irc_msg    => \&on_public,
-        irc_notice    => \&on_notice, 
+        irc_notice    => \&on_notice,
+        irc_join    => \&on_join,
     },
 );
 
@@ -458,17 +460,17 @@ sub on_public {
 		}
                 elsif ($msg =~ s/^nickserv//) {
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
-
+                    $printOrSay = 1;#show it in the channel
                     $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
                        my @seen = &dbuexist($msg);
                        if ($seen[0]) {
-                           $irc->yield( privmsg => "NickServ", "ACC $msg");
+                           &requestNickServ($msg);
                        }
                    }
                     else{
                         #checking with NickServ
-                        $irc->yield( privmsg => "NickServ", "ACC $nick");
+                        &requestNickServ($nick);
                     }
 		}
 		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
@@ -578,15 +580,43 @@ sub on_notice{
     if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
     {
         if($answer[2] == 3){
-            &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
+            if($printOrSay == 1){
+                &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
+                $printOrSay = 0; #say it in the channel only once
+            }
+            else {
+                print "$answer[0] se ha autenticado.";
+            }
             #Here you should do whatever it takes to mark this nick has identified
             $hashNicks{ $answer[0] } = 1;#autenticated
         }
         else{
-            &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
-            $hashNicks{ $answer[0] } = 0;#NOT autenticated
+           if($printOrSay == 1){
+               &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
+               $printOrSay = 0; #say it in the channel only once
+           }
+           else {
+               print "ergg! $answer[0] no se ha autenticado con NickServ.";
+           }
+               $hashNicks{ $answer[0] } = 0;#NOT autenticated
         }
     }
+}
+
+sub on_join{
+    my ( $kernel, $who, $where ) = @_[ KERNEL, ARG0, ARG1 ];
+    my $nick = ( split /!/, $who )[0];
+    my $channel = $where->[0];
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+
+    &requestNickServ($nick);
 }
 
 sub sayto {
@@ -976,6 +1006,10 @@ sub checkauth {
 }
 
 #check if user is identified (nickserv)
+sub requestNickServ {
+    my $nick = shift;
+    $irc->yield( privmsg => "NickServ", "ACC $nick");
+}
 #only for freenode
 sub checkNickServ {
     my $nick = shift;
