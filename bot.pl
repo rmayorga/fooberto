@@ -498,7 +498,7 @@ sub on_public {
 		    my $a = "@jugadores";
 		        #print $a."\n";
 		    $contRul++;
-		    return;
+		    return undef;
 		}
 		elsif($msg =~ s/^disparar//) {
 		    my $encontrado=0;
@@ -507,10 +507,10 @@ sub on_public {
 			    if($jug cmp $nick){
 				$encontrado =1;}
 			}
-		    if($encontrado==0){&kick("plomazo en la shola por troll hijo de puta",$nick, $usenick, $priv); return;}
+		    if($encontrado==0){&kick("plomazo en la shola por troll hijo de puta",$nick, $usenick, $priv); return undef;}
 
 		    my $numero = $#jugadores;
-		    if($numero<=0){&kick("plomazo en la shola troll hijo de puta",$nick, $usenick, $priv); return;}
+		    if($numero<=0){&kick("plomazo en la shola troll hijo de puta",$nick, $usenick, $priv); return undef;}
 
 		    if($cargada==0){
 			$indRul = floor(rand($numero));
@@ -524,7 +524,7 @@ sub on_public {
 		    }
 		    else { &say("Escucha el sonido del martillo en la recÃara",$nick,$usenick,$priv); $contRul=$contRul-1;}
 
-		    return;
+		    return undef;
 		}elsif($msg =~ s/^ruleta status//) {
 		    my $cargados = "@jugadores";
 		    &say("madafakas cargados $cargados ",$nick,$usenick,$priv);
@@ -1474,7 +1474,7 @@ sub kick {
 
     $irc->yield( kick => $channel => $nick => $msg);
 
-    return
+    return;
 }
 
 
