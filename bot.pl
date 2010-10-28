@@ -583,6 +583,11 @@ debian paquete rama package_name
 debian version package_name 
 debian bug bug_number : Mostrar info respecto a ese bug 
 
+=item nickserv
+
+Sintaxis: nicserv | nickserv nick
+El bot verifica el usuario se ha identificado con nickserv
+
 =cut
 
 # TODO get rid of system commands and use perl
