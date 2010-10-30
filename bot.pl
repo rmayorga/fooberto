@@ -713,7 +713,7 @@ sub on_kick{
     # print ouput to screen and also log it
     my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
 
-    my $stringTmp = "$ts  *** $nickKicked was kicked by $whoOP ($msg)";
+    my $stringTmp = "$ts  *** $nickKicked was kicked by $nickKicked ($msg)";
     
     print $stringTmp."\n";
 
