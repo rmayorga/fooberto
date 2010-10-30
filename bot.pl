@@ -108,6 +108,9 @@ POE::Session->create(
         irc_notice    => \&on_notice,
         irc_join    => \&on_join,
         irc_nick    => \&on_nick,
+        irc_part    => \&on_part,
+        irc_quit    => \&on_quit,
+        irc_kick    => \&on_kick,
     },
 );
 
@@ -640,6 +643,84 @@ sub on_nick{
     &forgetNickServ($oldNick);
     &requestNickServ($newNick);
 }
+
+#Sent whenever someone leaves a channel that you're on
+sub on_part{
+    my ( $kernel, $who, $where, $msg ) = @_[ KERNEL, ARG0, ARG1, ARG2 ];
+    my $nick = ( split /!/, $who )[0];
+
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+    $msg = $dbh->quote($msg);
+    my $channel = $dbh->quote($where);
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+    $msg =~ s/\'//g;
+    $channel =~ s/\'//g;
+
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
+    #print "$nick part, calling forgetNickServ.\n";#debug
+    &forgetNickServ($nick);
+}
+
+
+#Sent whenever someone on a channel with you quits IRC (or gets KILLed).
+sub on_quit{
+    my ( $kernel, $who, $msg ) = @_[ KERNEL, ARG0, ARG1 ];
+    my $nick = ( split /!/, $who )[0];
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+    $msg = $dbh->quote($msg);
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+    $msg =~ s/\'//g;
+
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
+    #print "$nick quit, calling forgetNickServ.\n";#debug
+    &forgetNickServ($nick);
+}
+
+#Sent whenever someone gets booted off a channel that you're on
+sub on_kick{
+    my ( $kernel, $whoOP, $where, $whoKicked, $msg  ) = @_[ KERNEL, ARG0, ARG1, ARG2, ARG3 ];
+    my $nickOP = ( split /!/, $whoOP )[0];
+    my $nickKicked = ( split /!/, $whoKicked )[0];
+
+    #sanitize variables
+    $nickOP = $dbh->quote($nickOP);
+    $nickKicked = $dbh->quote($nickKicked);
+    $msg = $dbh->quote($msg);
+    my $channel = $dbh->quote($where);
+    #take off apostrofes. This will be added by each insert comand.
+    $nickKicked =~ s/\'//g;
+    $nickOP =~ s/\'//g;
+    $msg =~ s/\'//g;
+    $channel =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+
+    #print "Me acaban de informar nick: $nickKicked, a sido pateado (kick) por $nickOP msg: $msg\n";#debug
+    #print "$nickKicked kick, calling forgetNickServ.\n";#debug
+
+    &forgetNickServ($nickKicked);
+
+    # print ouput to screen and also log it
+    my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
+
+    my $stringTmp = "$ts  *** $nickKicked was kicked by $nickKicked ($msg)";
+    
+    print $stringTmp."\n";
+
+    #chanlog
+    &chanlog($stringTmp);
+}
+
 
 sub sayto {
 	my ($nick, $about) =@_;
