@@ -860,7 +860,7 @@ sub urbano {
                 {
                         $ndy = "err, no existe pero me suena a: ";
                 }
-                if ($content =~ /<div\sclass='definition'>(.*?)<\/div>/s)
+                if ($content =~ /<div\sclass="definition">(.*?)<\/div>/s)
                 {
 			push @definitions,$1;
                 }
