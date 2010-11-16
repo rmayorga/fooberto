@@ -84,6 +84,9 @@ my $bgreferer = "BOT.google_referer";
 # and even more ugly options
 my $biuser = "IDENTICA.user";
 my $bipass = "IDENTICA.pass";
+my $bishowNick = "IDENTICA.showNick";
+my $bicheckNickserv = "IDENTICA.checkNickserv";
+my $bionlyElite = "IDENTICA.onlyElite";
 
 # unnecesary but funny options
 my @jugadores;
@@ -446,8 +449,26 @@ sub on_public {
 		elsif ($msg =~ m/^identica say (.+)/) {
 		    chomp($1);
 
-                    my $check = &checkauth($nick);#check if it is an authorized user
-                    my $checkNick = &checkNickServ($nick);#check if the nick is identified
+                    my $check = undef;
+                    my $checkNick = undef;
+
+                    if ( defined($bconf{$bionlyElite}) && ($bconf{$bionlyElite} eq 'true') )
+                    {
+                        $check = &checkauth($nick);#check if it is an authorized user
+                    }
+                    else
+                    {
+                        $check = 'ok';
+                    }
+
+                    if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+                    {
+                        $checkNick = &checkNickServ($nick);#check if the nick is identified
+                    }
+                    else
+                    {
+                        $checkNick = 'ok';
+                    }
 
                     #print "is $nick an authorized user?: $check\n";#debug
                     
@@ -592,7 +613,7 @@ sub on_notice{
             else {
                 print "$answer[0] se ha autenticado.\n";
             }
-            #Here you should do whatever it takes to mark this nick has identified
+            #Here you should do whatever it takes to mark that this nick is identified
             $hashNicks{ $answer[0] } = 1;#autenticated
         }
         else{
@@ -1119,6 +1140,7 @@ sub requestNickServ {
 #only for freenode
 sub checkNickServ {
     my $nick = shift;
+
     if(defined($hashNicks{ $nick })){
         if($hashNicks{ $nick } == 1){
             #print "$nick esta Identificado con Nickserv\n";#debug
@@ -1559,7 +1581,11 @@ identica pull | identica pull foo
 sub identica_say {
     my ($message,$nick) = @_;
 
-    $message = $message." (vía \@$nick)";
+    if(defined($bconf{$bishowNick}) && ($bconf{$bishowNick} eq 'true'))
+    {
+        $message = $message." (vía \@$nick)";
+    }
+
     my $size = length($message);
     if ($size <= 140){
 	$message = decode("utf-8", $message);
