@@ -1230,7 +1230,8 @@ sub getpipianlvl {
 =item identica
 
 Las funciones de Identica
-identica say mensaje
+identica say msg
+identica respond conversation_id msg
 identica pull | identica pull foo
 
 =cut
@@ -1246,6 +1247,16 @@ sub identica_say {
     }
 }
 
+sub identica_respond {
+    my ($conversation_no, $message) = @_;
+    my $size = lenght($message);
+    if ($size <= 140){
+	$message = decode("utf-8", $message);
+	return $message if $identica->update({ status => $message, in_reply_to_status_id => $conversation_no });
+    }else{
+	return undef;
+    }
+}
 sub identica_pull {
     my $nick = shift @_;
     if ($nick) {
