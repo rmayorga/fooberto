@@ -1602,6 +1602,8 @@ sub identica_pull {
 	my $last_status = shift( @$fetch );
 	if ($last_status) {
 	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    my $conversation_no = ${$last_status}{id};
+	    $dent .= " [$conversation_no]";
 	    return (${$last_status}{user}{"screen_name"}, $dent);
 	} else { return ($nick, undef); }
     } else {
@@ -1609,6 +1611,8 @@ sub identica_pull {
 	my $last_status = shift( @$fetch );
 	if ($last_status) {
 	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    my $conversation_no = ${$last_status}{id};
+	    $dent .= " [$conversation_no]";
 	    return (${$last_status}{user}{"screen_name"}, $dent);
 	} else { return (undef, undef); }
     }
