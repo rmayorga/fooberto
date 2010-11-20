@@ -4,7 +4,7 @@ use strict;
 use integer;
 use POE;
 use POE::Component::IRC;
-use Net::Google; #thiw was replaced by Google::search /jmas
+#use Net::Google; #thiw was replaced by Google::search /jmas
 use Google::Search;
 use SOAP::Lite;
 use WWW::Wikipedia;
@@ -18,6 +18,7 @@ use HTML::Entities;
 use XML::Simple;
 use Net::Identica;
 use Encode;
+use POSIX;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -83,6 +84,19 @@ my $bgreferer = "BOT.google_referer";
 # and even more ugly options
 my $biuser = "IDENTICA.user";
 my $bipass = "IDENTICA.pass";
+my $bishowNick = "IDENTICA.showNick";
+my $bicheckNickserv = "IDENTICA.checkNickserv";
+my $bionlyElite = "IDENTICA.onlyElite";
+
+# unnecesary but funny options
+my @jugadores;
+my $cargada=0;
+my $contRul=-1;
+my $indRul;
+
+# ugly array to track nickserv identified nicks
+my %hashNicks = ();
+my $printOrSay = 0; #0 print it for debug. 1 say it in the channel
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
@@ -93,7 +107,13 @@ POE::Session->create(
         _start     => \&bot_start,
         irc_001    => \&on_connect,
         irc_public => \&on_public,
-	irc_msg    => \&on_public, 
+	irc_msg    => \&on_public,
+        irc_notice    => \&on_notice,
+        irc_join    => \&on_join,
+        irc_nick    => \&on_nick,
+        irc_part    => \&on_part,
+        irc_quit    => \&on_quit,
+        irc_kick    => \&on_kick,
     },
 );
 
@@ -298,6 +318,7 @@ sub on_public {
 		   $msg =~ s/^\ +//g;
 		   if ($msg =~m/list/) { &actionlist($nick, $usenick, $priv); $add = 'no'; }
 		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; }
+		   if ($msg =~s/^search//) { &actionsearch($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 		   my $check = &checkauth($nick);
                    if (($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
@@ -427,12 +448,56 @@ sub on_public {
 		}
 		elsif ($msg =~ m/^identica say (.+)/) {
 		    chomp($1);
-		    if ($identica) {
-			my $text = &identica_say($1);
-			&say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
-		    } else {
-			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
-		    }
+
+                    my $check = undef;
+                    my $checkNick = undef;
+
+                    if ( defined($bconf{$bionlyElite}) && ($bconf{$bionlyElite} eq 'true') )
+                    {
+                        $check = &checkauth($nick);#check if it is an authorized user
+                    }
+                    else
+                    {
+                        $check = 'ok';
+                    }
+
+                    if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+                    {
+                        $checkNick = &checkNickServ($nick);#check if the nick is identified
+                    }
+                    else
+                    {
+                        $checkNick = 'ok';
+                    }
+
+                    #print "is $nick an authorized user?: $check\n";#debug
+                    
+                    if( ($check) && ($checkNick) )
+                    {
+                        if ($identica) {
+                            my $text = &identica_say($1,$nick);
+                            &say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
+                        } else {
+                            &say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
+                        }
+                        #de-autenticate user (nickserv)
+                        &forgetNickServ($nick);
+                    }
+		}
+                elsif ($msg =~ s/^nickserv//) {
+                    #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
+                    $printOrSay = 1;#show it in the channel
+                    $msg =~ s/^\ +//g;
+		   if (length($msg) >= 1) {
+                       my @seen = &dbuexist($msg);
+                       if ($seen[0]) {
+                           &requestNickServ($msg);
+                       }
+                   }
+                    else{
+                        #checking with NickServ
+                        &requestNickServ($nick);
+                    }
 		}
 		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
 		    chomp($1) if defined $1;
@@ -455,6 +520,42 @@ sub on_public {
 		    } else {
 			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
+		}
+		elsif($msg =~ s/^cargar//) {
+		    push(@jugadores,$nick);
+		    my $a = "@jugadores";
+		        #print $a."\n";
+		    $contRul++;
+		    return undef;
+		}
+		elsif($msg =~ s/^disparar//) {
+		    my $encontrado=0;
+		        foreach my $jug (@jugadores)
+			{
+			    if($jug cmp $nick){
+				$encontrado =1;}
+			}
+		    if($encontrado==0){&kick("plomazo en la shola por troll hijo de puta",$nick, $usenick, $priv); return undef;}
+
+		    my $numero = $#jugadores;
+		    if($numero<=0){&kick("plomazo en la shola troll hijo de puta",$nick, $usenick, $priv); return undef;}
+
+		    if($cargada==0){
+			$indRul = floor(rand($numero));
+			$cargada=1;
+		    }
+		    if($contRul==$indRul){
+			@jugadores = ("");
+			$cargada = 0;
+			$contRul = -1;
+			&kick("Subiendo las fotos a 4chan de tus sesos esparcidos ",$nick, $usenick, $priv);
+		    }
+		    else { &say("Escucha el sonido del martillo en la recÃara",$nick,$usenick,$priv); $contRul=$contRul-1;}
+
+		    return undef;
+		}elsif($msg =~ s/^ruleta status//) {
+		    my $cargados = "@jugadores";
+		    &say("madafakas cargados $cargados ",$nick,$usenick,$priv);
 		}
                 elsif ($msg =~ s/^help//) {
                    $msg =~ s/\ +//g;
@@ -484,6 +585,163 @@ sub on_public {
     }
 
 }
+
+sub on_notice{
+    my ( $kernel, $who, $where, $msg ) = @_[ KERNEL, ARG0, ARG1, ARG2 ];
+    my $nick = ( split /!/, $who )[0];
+    my $channel = $where->[0];
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+    $msg = $dbh->quote($msg);
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+    $msg =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+
+    my @answer = split(/\s+/, $msg);
+
+    #is this an answer to a ACC request to nickserv? (admin comand)
+    if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
+    {
+        if($answer[2] == 3){
+            if($printOrSay == 1){
+                &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
+                $printOrSay = 0; #say it in the channel only once
+            }
+            else {
+                print "$answer[0] se ha autenticado.\n";
+            }
+            #Here you should do whatever it takes to mark that this nick is identified
+            $hashNicks{ $answer[0] } = 1;#autenticated
+        }
+        else{
+           if($printOrSay == 1){
+               &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
+               $printOrSay = 0; #say it in the channel only once
+           }
+           else {
+               print "ergg! $answer[0] no se ha autenticado con NickServ.\n";
+           }
+               $hashNicks{ $answer[0] } = 0;#NOT autenticated
+        }
+    }
+}
+
+sub on_join{
+    my ( $kernel, $who, $where ) = @_[ KERNEL, ARG0, ARG1 ];
+    my $nick = ( split /!/, $who )[0];
+    my $channel = $where;
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+
+    &requestNickServ($nick);
+}
+
+#Sent whenever you, or someone around you, changes nicks.
+sub on_nick{
+    my ( $kernel, $who, $newWho ) = @_[ KERNEL, ARG0, ARG1 ];
+    my $oldNick = ( split /!/, $who )[0];
+    my $newNick = ( split /!/, $newWho )[0];
+    
+
+    #sanitize variables
+    $newNick = $dbh->quote($newNick);
+    $oldNick = $dbh->quote($oldNick);
+
+    #take off apostrofes. This will be added by each insert comand.
+    $oldNick =~ s/\'//g;
+    $newNick =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    &forgetNickServ($oldNick);
+    &requestNickServ($newNick);
+}
+
+#Sent whenever someone leaves a channel that you're on
+sub on_part{
+    my ( $kernel, $who, $where, $msg ) = @_[ KERNEL, ARG0, ARG1, ARG2 ];
+    my $nick = ( split /!/, $who )[0];
+
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+    $msg = $dbh->quote($msg);
+    my $channel = $dbh->quote($where);
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+    $msg =~ s/\'//g;
+    $channel =~ s/\'//g;
+
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
+    #print "$nick part, calling forgetNickServ.\n";#debug
+    &forgetNickServ($nick);
+}
+
+
+#Sent whenever someone on a channel with you quits IRC (or gets KILLed).
+sub on_quit{
+    my ( $kernel, $who, $msg ) = @_[ KERNEL, ARG0, ARG1 ];
+    my $nick = ( split /!/, $who )[0];
+
+    #sanitize variables
+    $nick = $dbh->quote($nick);
+    $msg = $dbh->quote($msg);
+    #take off apostrofes. This will be added by each insert comand.
+    $nick =~ s/\'//g;
+    $msg =~ s/\'//g;
+
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
+    #print "$nick quit, calling forgetNickServ.\n";#debug
+    &forgetNickServ($nick);
+}
+
+#Sent whenever someone gets booted off a channel that you're on
+sub on_kick{
+    my ( $kernel, $whoOP, $where, $whoKicked, $msg  ) = @_[ KERNEL, ARG0, ARG1, ARG2, ARG3 ];
+    my $nickOP = ( split /!/, $whoOP )[0];
+    my $nickKicked = ( split /!/, $whoKicked )[0];
+
+    #sanitize variables
+    $nickOP = $dbh->quote($nickOP);
+    $nickKicked = $dbh->quote($nickKicked);
+    $msg = $dbh->quote($msg);
+    my $channel = $dbh->quote($where);
+    #take off apostrofes. This will be added by each insert comand.
+    $nickKicked =~ s/\'//g;
+    $nickOP =~ s/\'//g;
+    $msg =~ s/\'//g;
+    $channel =~ s/\'//g;
+
+    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+
+    #print "Me acaban de informar nick: $nickKicked, a sido pateado (kick) por $nickOP msg: $msg\n";#debug
+    #print "$nickKicked kick, calling forgetNickServ.\n";#debug
+
+    &forgetNickServ($nickKicked);
+
+    # print ouput to screen and also log it
+    my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
+
+    my $stringTmp = "$ts  *** $nickKicked was kicked by $nickKicked ($msg)";
+    
+    print $stringTmp."\n";
+
+    #chanlog
+    &chanlog($stringTmp);
+}
+
 
 sub sayto {
 	my ($nick, $about) =@_;
@@ -522,6 +780,11 @@ Las funciones Debian
 debian paquete rama package_name 
 debian version package_name 
 debian bug bug_number : Mostrar info respecto a ese bug 
+
+=item nickserv
+
+Sintaxis: nicserv | nickserv nick
+El bot verifica el usuario se ha identificado con nickserv
 
 =cut
 
@@ -752,6 +1015,58 @@ sub faction {
 
 }
 
+
+sub actionsearch {
+    my ($nick, $usenick, $priv, $channel,$msg) = @_;;
+
+    $msg =~s/\s//;
+    my $searchSt = $msg;
+    my @rest;
+
+    if(!($searchSt cmp '')){ return  ;}
+
+    my $sth = $dbh->prepare("SELECT COUNT(id) from actions where id like ('%$searchSt%') or action like ('%$searchSt%') ");
+
+    $sth->execute();
+    my $rnum = $sth->fetchrow();
+    $sth = $dbh->prepare("SELECT id from actions where id like ('%$searchSt%') or action like ('%$searchSt%') ");
+
+    $sth->execute();
+    for (1..$rnum) {
+	push (@rest , $sth->fetchrow);
+    }
+
+    my $myString = "@rest";
+    my $myLength = length($myString);
+
+    if(($priv eq "yes") && ($myLength > 409)) {
+	            #if is priv -> take care of show the complete list
+	my $myStart = 0;
+	my $myEnd = 0;
+	my $mySubString = "";
+
+	while($myStart < $myLength) {
+	    $myEnd+=409;
+	    $mySubString = substr($myString, $myStart, $myEnd);
+	    &say ($mySubString, "$nick", $usenick, $priv) unless $channel;
+	    $myStart = $myEnd;
+	}
+    }
+    else {
+	            #if is not priv -> just show the fist 350 characters
+	&say ($myString, "$nick", $usenick, $priv) ;
+	#    &say ("@rest", "$nick", $usenick, $priv) unless $channel;
+    }
+
+    # if ($channel) {
+    # 	$nick =~ s/^\ //;
+    # 	&faction("$nick", $channel, "$rest[int rand @rest] $nick");
+    # }
+
+
+}
+
+
 =item quote
 
 quote add the_quote 
@@ -814,6 +1129,34 @@ sub checkauth {
 	if ($ok) { return "ok" } else { return undef }
 }
 
+#check if user is identified (nickserv)
+sub requestNickServ {
+    my $nick = shift;
+
+    &forgetNickServ($nick);
+    
+    $irc->yield( privmsg => "NickServ", "ACC $nick");
+}
+#only for freenode
+sub checkNickServ {
+    my $nick = shift;
+
+    if(defined($hashNicks{ $nick })){
+        if($hashNicks{ $nick } == 1){
+            #print "$nick esta Identificado con Nickserv\n";#debug
+            return "ok";
+        }
+    }
+    #print "$nick NO esta Identificado con Nickserv\n";#debug
+    return undef;
+}
+
+sub forgetNickServ {
+    my $nick = shift;
+    $hashNicks{ $nick } = 0;
+}
+
+
 sub authen {
 	my ($nick, $gpass) = @_;
 	my $sth = $dbh->prepare
@@ -860,7 +1203,7 @@ sub urbano {
                 {
                         $ndy = "err, no existe pero me suena a: ";
                 }
-                if ($content =~ /<div\sclass='definition'>(.*?)<\/div>/s)
+                if ($content =~ /<div\sclass="definition">(.*?)<\/div>/s)
                 {
 			push @definitions,$1;
                 }
@@ -1237,7 +1580,13 @@ identica pull | identica pull foo
 =cut
 
 sub identica_say {
-    my ($message) = @_;
+    my ($message,$nick) = @_;
+
+    if(defined($bconf{$bishowNick}) && ($bconf{$bishowNick} eq 'true'))
+    {
+        $message = $message." (vía \@$nick)";
+    }
+
     my $size = length($message);
     if ($size <= 140){
 	$message = decode("utf-8", $message);
@@ -1264,6 +1613,8 @@ sub identica_pull {
 	my $last_status = shift( @$fetch );
 	if ($last_status) {
 	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    my $conversation_no = ${$last_status}{id};
+	    $dent .= " [$conversation_no]";
 	    return (${$last_status}{user}{"screen_name"}, $dent);
 	} else { return ($nick, undef); }
     } else {
@@ -1271,6 +1622,8 @@ sub identica_pull {
 	my $last_status = shift( @$fetch );
 	if ($last_status) {
 	    my $dent = encode("utf-8", ${$last_status}{"text"});
+	    my $conversation_no = ${$last_status}{id};
+	    $dent .= " [$conversation_no]";
 	    return (${$last_status}{user}{"screen_name"}, $dent);
 	} else { return (undef, undef); }
     }
@@ -1287,6 +1640,23 @@ sub chanlog {
 	print LOG "$logme\n";
 	close(LOG)
 }
+
+=item ruleta
+
+Las funciones de ruleta son
+ruleta status
+
+=cut
+
+sub kick {
+    my ($msg, $nick, $usenick, $priv ) = @_;
+    my $channel = $bconf{$bchan};
+
+    $irc->yield( kick => $channel => $nick => $msg);
+
+    return;
+}
+
 
 =item help
 
