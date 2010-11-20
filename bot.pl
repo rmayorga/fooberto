@@ -446,8 +446,15 @@ sub on_public {
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
 		}
-		elsif ($msg =~ m/^identica say (.+)/) {
-		    chomp($1);
+		elsif ($msg =~ m/^identica\s+say\s+(.+)|^identica\s+respond\s+(\d+)\s+(.+)/) {
+		    my $msg_to_say;
+		    if (defined $3) {
+			chomp($3);
+			$msg_to_say = $3;
+		    } else {
+			chomp ($1) if defined;
+			$msg_to_say = $1;
+		    }
 
                     my $check = undef;
                     my $checkNick = undef;
@@ -475,7 +482,10 @@ sub on_public {
                     if( ($check) && ($checkNick) )
                     {
                         if ($identica) {
-                            my $text = &identica_say($1,$nick);
+			    my $text;
+			    if (defined $2) {
+				$text = &identica_say($2, $msg_to_say, $nick);
+			    } else { $text = &identica_say(undef, $1,$nick); }
                             &say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
                         } else {
                             &say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
@@ -1580,7 +1590,7 @@ identica pull | identica pull foo
 =cut
 
 sub identica_say {
-    my ($message,$nick) = @_;
+    my ($conversation_no, $message,$nick) = @_;
 
     if(defined($bconf{$bishowNick}) && ($bconf{$bishowNick} eq 'true'))
     {
@@ -1590,22 +1600,14 @@ sub identica_say {
     my $size = length($message);
     if ($size <= 140){
 	$message = decode("utf-8", $message);
-	return $message if $identica->update("$message");
+	if (defined $conversation_no) {
+	    return $message if $identica->update({ status => $message, in_reply_to_status_id => $conversation_no });
+	} else { return $message if $identica->update("$message"); }
     }else{
 	return undef;
     }
 }
 
-sub identica_respond {
-    my ($conversation_no, $message) = @_;
-    my $size = lenght($message);
-    if ($size <= 140){
-	$message = decode("utf-8", $message);
-	return $message if $identica->update({ status => $message, in_reply_to_status_id => $conversation_no });
-    }else{
-	return undef;
-    }
-}
 sub identica_pull {
     my $nick = shift @_;
     if ($nick) {
