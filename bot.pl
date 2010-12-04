@@ -556,7 +556,17 @@ sub on_public {
 		}elsif($msg =~ s/^ruleta status//) {
 		    my $cargados = "@jugadores";
 		    &say("madafakas cargados $cargados ",$nick,$usenick,$priv);
+		}elsif ($msg =~ s/^wikileaks//) {
+		   if (length($msg) >= 1) {
+		        my $out = &wikileaks($msg);
+			if ($out) {
+			    &say($out, $nick, $usenick, $priv);
+			} else {
+			   &say("no soy perfecto, pero creo que $msg esta bien", $nick, $usenick, $priv);
+			}
+		   }
 		}
+
                 elsif ($msg =~ s/^help//) {
                    $msg =~ s/\ +//g;
                    my $out =gethelp($msg);
@@ -1640,6 +1650,25 @@ sub kick {
     $irc->yield( kick => $channel => $nick => $msg);
 
     return;
+}
+
+
+=item wikileaks
+
+Las funciones de wikileaks son
+wikileaks google
+wikileaks wikipedia
+wikileaks youtube
+
+=cut
+
+sub wikileaks {
+    my ($msg) = @_;
+    print $msg;
+    my $salida = `sr $msg`;
+    return $salida;
+    
+
 }
 
 
