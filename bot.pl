@@ -319,6 +319,7 @@ sub on_public {
 		   if ($msg =~m/list/) { &actionlist($nick, $usenick, $priv); $add = 'no'; }
 		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; }
 		   if ($msg =~s/^search//) { &actionsearch($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
+		   if ($msg =~s/^blame//) { &actionblame($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 		   my $check = &checkauth($nick);
                    if (($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
@@ -556,16 +557,17 @@ sub on_public {
 		}elsif($msg =~ s/^ruleta status//) {
 		    my $cargados = "@jugadores";
 		    &say("madafakas cargados $cargados ",$nick,$usenick,$priv);
-		}elsif ($msg =~ s/^wikileaks//) {
-		   if (length($msg) >= 1) {
-		        my $out = &wikileaks($msg);
-			if ($out) {
-			    &say($out, $nick, $usenick, $priv);
-			} else {
-			   &say("no soy perfecto, pero creo que $msg esta bien", $nick, $usenick, $priv);
-			}
-		   }
-		}
+		}#action blame TODO
+                # elsif ($msg =~ s/^wikileaks//) {
+		#    if (length($msg) >= 1) {
+		#         my $out = &wikileaks($msg);
+		# 	if ($out) {
+		# 	    &say($out, $nick, $usenick, $priv);
+		# 	} else {
+		# 	   &say("no soy perfecto, pero creo que $msg esta bien", $nick, $usenick, $priv);
+		# 	}
+		#    }
+		# }
 
                 elsif ($msg =~ s/^help//) {
                    $msg =~ s/\ +//g;
@@ -935,6 +937,8 @@ action id_accion le_hace_algo_a NICK algo_mas
 action id_accion nick
 action random nick
 action olvidar id_acccion
+action search texto
+action blame id_accion
 
 =cut
 
@@ -1075,6 +1079,25 @@ sub actionsearch {
 
 
 }
+
+sub actionblame {
+    my ($nick, $usenick, $priv, $channel,$msg) = @_;;
+
+    $msg =~s/\s//;
+    my $acti = $msg;
+    my @rest;
+
+    if(!($acti cmp '')){ return  ;}
+
+    my $sth = $dbh->prepare("SELECT who from actions where id like ('%$acti%') ");
+
+    $sth->execute();
+    my $nickBlame = "el bastardo que hizo ese action sin gracia fue ".$sth->fetchrow();
+    
+    &say ($nickBlame, "$nick", $usenick, $priv) ;
+
+}
+
 
 
 =item quote
@@ -1652,24 +1675,24 @@ sub kick {
     return;
 }
 
+#todo
+# =item wikileaks
 
-=item wikileaks
+# Las funciones de wikileaks son
+# wikileaks google
+# wikileaks wikipedia
+# wikileaks youtube
 
-Las funciones de wikileaks son
-wikileaks google
-wikileaks wikipedia
-wikileaks youtube
+# =cut
 
-=cut
-
-sub wikileaks {
-    my ($msg) = @_;
-    print $msg;
-    my $salida = `sr $msg`;
-    return $salida;
+# sub wikileaks {
+#     my ($msg) = @_;
+#     print $msg;
+#     my $salida = `sr $msg`;
+#     return $salida;
     
 
-}
+# }
 
 
 =item help
