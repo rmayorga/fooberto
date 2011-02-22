@@ -1092,7 +1092,7 @@ sub actionblame {
     my $sth = $dbh->prepare("SELECT who from actions where id like ('%$acti%') ");
 
     $sth->execute();
-    my $nickBlame = "el bastardo que hizo ese action sin gracia fue ".$sth->fetchrow();
+    my $nickBlame = "el bastardo que hizo ese action sin gracia, pura mierda y con faltas de ortografía fue ".$sth->fetchrow();
     
     &say ($nickBlame, "$nick", $usenick, $priv) ;
 
