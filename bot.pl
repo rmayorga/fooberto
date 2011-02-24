@@ -500,15 +500,16 @@ sub on_public {
 		}
                 elsif ($msg =~ s/^nickserv//) {
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
-                    $printOrSay = 1;#show it in the channel
                     $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
                        my @seen = &dbuexist($msg);
                        if ($seen[0]) {
+                           $printOrSay = 1;#show it in the channel
                            &requestNickServ($msg);
                        }
                    }
                     else{
+                        $printOrSay = 1;#show it in the channel
                         #checking with NickServ
                         &requestNickServ($nick);
                     }
