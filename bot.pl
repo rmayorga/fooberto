@@ -557,7 +557,11 @@ sub on_public {
 		}elsif($msg =~ s/^ruleta status//) {
 		    my $cargados = "@jugadores";
 		    &say("madafakas cargados $cargados ",$nick,$usenick,$priv);
-		}#action blame TODO
+		}elsif($msg =~ s/^blame//){
+		   $msg =~ s/^\ +//g;
+		   &nickblame($nick, $usenick, $priv, $channel,$msg);
+		}
+                #action leaks TODO
                 # elsif ($msg =~ s/^wikileaks//) {
 		#    if (length($msg) >= 1) {
 		#         my $out = &wikileaks($msg);
@@ -1084,12 +1088,10 @@ sub actionblame {
     my ($nick, $usenick, $priv, $channel,$msg) = @_;;
 
     $msg =~s/\s//;
-    my $acti = $msg;
-    my @rest;
 
-    if(!($acti cmp '')){ return  ;}
+    if(!($msg cmp '')){ return  ;}
 
-    my $sth = $dbh->prepare("SELECT who from actions where id like ('%$acti%') ");
+    my $sth = $dbh->prepare("SELECT who from actions where id like ('%$msg%') ");
 
     $sth->execute();
     my $nickBlame = "el bastardo que hizo ese action sin gracia, pura mierda y con faltas de ortografía fue ".$sth->fetchrow();
@@ -1098,6 +1100,29 @@ sub actionblame {
 
 }
 
+=item blame
+
+blame nick
+
+=cut
+
+sub nickblame {
+    my ($nick, $usenick, $priv, $channel,$msg) = @_;;
+
+    $msg =~s/\s//;
+
+    if(!($msg cmp '')){ return  ;}
+
+    print $msg;
+
+    my $sth = $dbh->prepare("SELECT who from facts where fact like ('%$msg%') ");
+
+    $sth->execute();
+    my $nickBlame = "la definición del nick del bastardo de $msg fue obra de su admirador secreto ".$sth->fetchrow();
+    
+    &say ($nickBlame, "$nick", $usenick, $priv) ;
+
+}
 
 
 =item quote
