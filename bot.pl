@@ -320,8 +320,21 @@ sub on_public {
 		   if ($msg =~s/^random//) { &actionlist($msg, $usenick, $priv, $channel); $add = 'no'; }
 		   if ($msg =~s/^search//) { &actionsearch($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 		   if ($msg =~s/^blame//) { &actionblame($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
+
+                   #check if the user is in the elite group
 		   my $check = &checkauth($nick);
-                   if (($check) && ($msg =~s/^olvidar//)) {
+
+                   #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
+                    if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+                    {
+                        $checkNick = &checkNickServ($nick);#check if the nick is identified
+                    }
+                    else
+                    {
+                        $checkNick = 'ok';
+                    }
+                   
+                   if (($checkNick) && ($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
                        &forgetaction($nick, $msg);
                        $add = 'no';
@@ -461,7 +474,7 @@ sub on_public {
                     {
                         $check = 'ok';
                     }
-
+                    #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
                     if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
                     {
                         $checkNick = &checkNickServ($nick);#check if the nick is identified
@@ -1379,8 +1392,22 @@ sub forgetfact {
 
 sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
-	my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
+
+        #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
+        if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+        {
+            $checkNick = &checkNickServ($nick);#check if the nick is identified
+        }
+        else
+        {
+            $checkNick = 'ok';
+        }
+
+        if($checkNick)
+        {
+            my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
 	$sth->execute();
+        }
 }
 
 sub fffact {
