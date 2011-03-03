@@ -325,6 +325,7 @@ sub on_public {
 		   my $check = &checkauth($nick);
 
                    #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
+                   my $checkNick = undef;
                     if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
                     {
                         $checkNick = &checkNickServ($nick);#check if the nick is identified
@@ -339,7 +340,7 @@ sub on_public {
                        &forgetaction($nick, $msg);
                        $add = 'no';
                    }
-		   if (($check) && (!$add))  {
+		   if (($checkNick) && ($check) && (!$add))  {
 		   	if (length($msg) >= 1) {
 				&actionadd($msg, $nick)
 		  	 }
@@ -1395,6 +1396,7 @@ sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
 
         #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
+        my $checkNick = undef;
         if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
         {
             $checkNick = &checkNickServ($nick);#check if the nick is identified
