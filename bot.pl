@@ -16,7 +16,7 @@ use POSIX qw(strftime);
 use LWP::Simple;
 use HTML::Entities;
 use XML::Simple;
-use Net::Identica;
+use Net::Twitter;
 use Encode;
 use POSIX;
 
@@ -138,13 +138,18 @@ sub bot_start{
 # Creating object to manage Identi.ca API if configuration variables exist
 my $identica;
 if (defined ($biuser && $bipass)) {
-    $identica = Net::Identica->new(
+    $identica = Net::Twitter->new(
+      legacy   => 1,
+      identica => 1,
 	    username => $bconf{$biuser},
 	    password => $bconf{$bipass}, 
 	    source => '', 
 	    traits => [qw/ WrapError /]);
     $identica = undef unless $identica->verify_credentials;
 } else { $identica = undef; }
+
+# most attributes are optional, and we enable legacy mode
+my $twitter = Net::Twitter->new();
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
@@ -531,6 +536,26 @@ sub on_public {
 				&say("probablemente el usuario \@$user no este registrado en identi.ca :D", $nick, $usenick, $priv);
 			    } else {
 				&say("ergg un error con mi conexion a identi.ca seguramente :\\", $nick, $usenick, $priv);
+			    }
+			}
+		    } else {
+			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
+		    }
+		}
+		elsif ($msg =~ m/^tuiter pull$|^tuiter pull (\w+)/) {
+			chomp($1) if defined $1;
+			if ($twitter) {
+			my ($user, $dent);
+			if ($1) {
+				($user, $dent) = &identica_pull($1, $twitter); 
+			} 
+			if ($user && $dent){
+			    &say("en tuiter \@$user dijo: $dent", $nick, $usenick, $priv);
+			} else {
+			    unless ($dent) {
+				&say("probablemente el usuario \@$user no este registrado en tuiter :D", $nick, $usenick, $priv);
+			    } else {
+				&say("ergg un error con mi conexion seguramente :\\", $nick, $usenick, $priv);
 			    }
 			}
 		    } else {
@@ -1684,22 +1709,28 @@ sub identica_say {
 }
 
 sub identica_pull {
-    my $nick = shift @_;
-    if ($nick) {
-	my $fetch = $identica->user_timeline({screen_name => $nick});
-	my $last_status = shift( @$fetch );
-	if ($last_status) {
-	    my $dent = encode("utf-8", ${$last_status}{"text"});
-	    return (${$last_status}{user}{"screen_name"}, $dent);
-	} else { return ($nick, undef); }
-    } else {
-	my $fetch = $identica->home_timeline;
-	my $last_status = shift( @$fetch );
-	if ($last_status) {
-	    my $dent = encode("utf-8", ${$last_status}{"text"});
-	    return (${$last_status}{user}{"screen_name"}, $dent);
-	} else { return (undef, undef); }
-    }
+	my $nick   = shift @_;
+	my $server = shift @_;
+	if (!$server) {
+		$server = $identica;
+	}
+	if ($nick) {
+		my $fetch = $server->user_timeline({screen_name => $nick});
+		my $last_status = shift( @$fetch );
+		if ($last_status) {
+			my $dent = encode("utf-8", ${$last_status}{"text"});
+			return (${$last_status}{user}{"screen_name"}, $dent);
+		} else { return ($nick, undef); }
+	} else {
+		my $fetch = $server->home_timeline;
+		if ($fetch){
+			my $last_status = shift( @$fetch );
+			if ($last_status) {
+				my $dent = encode("utf-8", ${$last_status}{"text"});
+				return (${$last_status}{user}{"screen_name"}, $dent);
+			}
+		} else { return (undef, undef); }
+	}
 }
 
 sub doaction {
