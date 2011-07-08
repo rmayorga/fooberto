@@ -143,8 +143,7 @@ if (defined ($biuser && $bipass)) {
       identica => 1,
 	    username => $bconf{$biuser},
 	    password => $bconf{$bipass}, 
-	    source => '', 
-	    traits => [qw/ WrapError /]);
+	    source => '');
     $identica = undef unless $identica->verify_credentials;
 } else { $identica = undef; }
 
