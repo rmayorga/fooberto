@@ -1154,7 +1154,7 @@ sub nickblame {
 
     print $msg;
 
-    my $sth = $dbh->prepare("SELECT who from facts where fact like ('%$msg%') ");
+    my $sth = $dbh->prepare("SELECT who from facts where fact = '%$msg%' ");
 
     $sth->execute();
     my $nickBlame = "la definición del nick del bastardo de $msg fue obra de su admirador secreto ".$sth->fetchrow();

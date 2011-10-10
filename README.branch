@@ -12,6 +12,23 @@ I collected and made simple .deb packages using dh-make-perl, at some points tha
 available at Debian, but besides you can just install the package your self
 or use the ugly .deb that can be found here: http://los.talibanes-del.sl/~rmayorga/bot/dep
 
+In Debian systems the packages that you should install are:
+libpoe-component-irc-perl
+libcarp-clan-share-perl
+libgoogle-search-perl (http://jmaslibre.org/bot/libgoogle-search-perl_0.023-1_all.deb)
+libsoap-lite-perl
+libwww-wikipedia-perl
+libconfig-simple-perl
+libnet-twitter-perl
+libxml-simple-perl
+libpod-pom-perl
+libdbd-sqlite3-perl
+sqlite
+
+To give permission to add actions, quotes and etc.:
+sqlite3 bot.db
+update users set perm='auth' where nick='jmaslibre';
+Ctrl d
 
 Authors
 =======
