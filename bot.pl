@@ -1130,7 +1130,7 @@ sub actionblame {
 
     if(!($msg cmp '')){ return  ;}
 
-    my $sth = $dbh->prepare("SELECT who from actions where id like ('%$msg%') ");
+    my $sth = $dbh->prepare("SELECT who from actions where id = '$msg' ");
 
     $sth->execute();
     my $nickBlame = "el bastardo que hizo ese action sin gracia, pura mierda y con faltas de ortografía fue ".$sth->fetchrow();
