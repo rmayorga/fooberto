@@ -14,7 +14,10 @@ use Pod::POM;
 use DBI;
 use POSIX qw(strftime);
 use LWP::Simple;
+use LWP::UserAgent;
 use HTML::Entities;
+use HTMP::Request;
+Use HTMP::Response;
 use XML::Simple;
 use Net::Twitter;
 use Encode;
@@ -452,8 +455,22 @@ sub on_public {
 			}else {
 				&say("hmmm, ahí no ha temblado en los últimos 7 días", $nick, $usenick, $priv);
 			}
-
+		elsif ($msg =~ s/^news//){
+			my $out = &news();
+			if ($out) {
+				&say("$out", $nick, $usenick, $priv);
+			}else {
+				&say("err, noticias no estan disponibles", $nick, $usenick, $priv);
+			}
 		}
+		elsif ($msg =~ s/^tiny//){
+                        $msg =~ s/\ +//g;
+			my $out = &tiny($msg);
+			if ($out) {
+				&say("$out", $nick, $usenick, $priv);
+			}else {
+				&say("err, tinyurl parece estar teniendo problemas", $nick, $usenick, $priv);
+			}
 		elsif ($msg =~ m/contarle\ a\ \w.+ acerca\ de/) {
 			$msg =~ s/contarle\ a\ //;
 			$msg =~ s/acerca\ de//;
@@ -1365,6 +1382,67 @@ sub temblor {
 	}
 	$out = substr($out, 0, 199);
 	return $out;
+}
+
+=item corregir
+
+ Esta funcion se encarga de tomar una direccion URL y devuelve como resultado el hash
+ devuelto por el sitio http://tinyurl.com del correspondiente URL.
+
+ Sintaxis: tiny <url>
+=cut
+sub tiny{
+        my $direccion = shift;
+        my $out = "";
+        $consulta = HTTP::Request->new(GET => 'http://tinyurl.com/api-create.php?url='.$direccion);
+
+    $agente = LWP::UserAgent->new;
+    $respuesta = $agente->request($consulta);
+
+    if ($respuesta->is_success) {
+        $out = $respuesta->decoded_content;
+    }
+    else {
+        $out = "err: falla en tinyurl.com\n";
+    }
+    return $out;
+}
+
+=item corregir
+ Esta funcion hace un search en las Top News de AP y devuelve una de ellas aleatoriamente
+ El resultado incluye el titulo de la noticia, asi como el tinyURL hacia la misma
+ en el sitio de AP.
+
+ Sintaxis: news 
+=cut
+sub news{
+        my $msg = shift;
+        my $out = "";
+        my $url = "http://hosted2.ap.org/atom/APDEFAULT/3d281c11a96b4ad082fe88aa0db04305";
+        my $page = get($url);
+        my @titles = ();
+        my @links = ();
+        foreach (split ('<entry>', $page))
+        {
+           $content = $_;
+           if ($content =~ /rel\=\"bookmark\">(.*?)</s)
+           {
+                push @titles,$1;
+           }
+           if ($content =~ /href\=\"(.*?)\"/s)
+           {
+                push @links,$1;
+           }
+        }
+        if (@titles == 0)
+        {
+            return 'err, no encontre noticias';
+        }
+        $index = int rand @titles;
+        $dir = &tiny($links[$index+1]);
+
+        $out = substr($titles[$index],0,199).' | '.$dir;
+        return $out;
 }
 
 
