@@ -140,8 +140,8 @@ my $identica;
 if (defined ($biuser && $bipass)) {
     $identica = Net::Identica->new(
 	    username => $bconf{$biuser},
-	    password => $bconf{$bipass}, 
-	    source => '', 
+	    password => $bconf{$bipass},
+	    source => '',
 	    traits => [qw/ WrapError /]);
     $identica = undef unless $identica->verify_credentials;
 } else { $identica = undef; }
@@ -164,7 +164,7 @@ sub on_public {
     #take off apostrofes. This will be added by each insert comand.
     $nick =~ s/\'//g;
     $msg =~ s/\'//g;
-    
+
    # print ouput to screen and also log it
     my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
     print " $ts <$nick:$channel> $msg\n";
@@ -196,8 +196,8 @@ sub on_public {
 	$priv =  "yes" if $channel eq $bconf{$bnick};
 	$usenick = "yes" if $msg =~ m/^$bconf{$bnick}(,|;|:).+/;
 	$msg =~ s/(^$bconf{$bcomm}|^$bconf{$bnick}(,|;|:)\s+)//;
-	
-	
+
+
 	for ($msg) {
 		#default ping command
 		if ($msg =~ m/^ping/i) {
@@ -254,10 +254,10 @@ sub on_public {
 			    my $karma = &getkarma($msg);
 			    if ($karma < 0 ) {
 				    &say("ese tal $msg esta mal, $karma", $nick, $usenick, $priv);
-			    } elsif ( $karma > 0) { 
+			    } elsif ( $karma > 0) {
 				    &say("parece que $msg se porta bien, $karma", $nick, $usenick, $priv);
 			    } elsif ( $karma == 0 ) { &say("creo que $msg es _neutral_ , $karma", $nick, $usenick, $priv); }
-			} 
+			}
 		   }
 		}
 		elsif ($msg =~ m/^pipianometro/){
@@ -293,8 +293,8 @@ sub on_public {
 			if (!$getfact) {
 			   &putfact("$fact", "$fulltext", "$nick");
 			}
-		    } 
-		   
+		    }
+
 		}
 		elsif ($msg =~ s/^olvidar//) {
 		   $msg =~ s/\ +//g;
@@ -392,7 +392,7 @@ sub on_public {
 		elsif ($msg =~ s/\?$//) {
 		   if (length($msg) >= 1) {
 			##probabilities reached from conf_file
-			    my @probability ="$bconf{$probab}"; 
+			    my @probability ="$bconf{$probab}";
 			    my @prob = split("//",$probability[0]);
 			    &say($prob[ int rand @prob ], $nick, $usenick, $priv) unless ($usenick eq 'no');
 			}
@@ -444,7 +444,7 @@ sub on_public {
 			$target =~ s/\ \w.+//;
 			$target =~ s/\ +$//;
 			$about =~ s/^$target\ +//;
-			&sayto($target, $about); 
+			&sayto($target, $about);
 		}
 		elsif ($msg =~ m/^identica\s+say\s+(.+)|^identica\s+respond\s+(\d+)\s+(.+)/) {
 		    my $msg_to_say;
@@ -478,7 +478,7 @@ sub on_public {
                     }
 
                     #print "is $nick an authorized user?: $check\n";#debug
-                    
+
                     if( ($check) && ($checkNick) )
                     {
                         if ($identica) {
@@ -514,8 +514,8 @@ sub on_public {
 		    if ($identica) {
 			my ($user, $dent);
 			if ($1) {
-			    ($user, $dent) = &identica_pull($1); 
-			} else { 
+			    ($user, $dent) = &identica_pull($1);
+			} else {
 			    ($user, $dent) = &identica_pull();
 			}
 			if ($user && $dent){
@@ -574,7 +574,7 @@ sub on_public {
                        &say($out, $nick, $usenick, $priv);
                    }
 		}
-		else {  
+		else {
 			$msg =~ s/^\ +//g;
 			$msg =~ s/\'//g;
 			my $isfact = &fffact("$msg");
@@ -589,7 +589,7 @@ sub on_public {
 				my @prob = split("//",$probability[0]);
 				&say("$prob[ int rand @prob ] $msg es $isfact", $nick, $usenick, $priv);
 
-		  	}	
+		  	}
 		}
 	}
     }
@@ -660,7 +660,7 @@ sub on_nick{
     my ( $kernel, $who, $newWho ) = @_[ KERNEL, ARG0, ARG1 ];
     my $oldNick = ( split /!/, $who )[0];
     my $newNick = ( split /!/, $newWho )[0];
-    
+
 
     #sanitize variables
     $newNick = $dbh->quote($newNick);
@@ -745,7 +745,7 @@ sub on_kick{
     my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
 
     my $stringTmp = "$ts  *** $nickKicked was kicked by $nickKicked ($msg)";
-    
+
     print $stringTmp."\n";
 
     #chanlog
@@ -755,7 +755,7 @@ sub on_kick{
 
 sub sayto {
 	my ($nick, $about) =@_;
-	my $msg = &fffact("$about"); 
+	my $msg = &fffact("$about");
 	if ($msg) {
 		my @probability ="$bconf{$factran}";
 		my @prob = split("//",$probability[0]);
@@ -773,12 +773,12 @@ Fechas cercanas, dignas de conmemorar con una cerveza o/.
 
 =item saludar
 
-Sintaxis: saludar nick 
-fooberto saluda amablemente por vos 
+Sintaxis: saludar nick
+fooberto saluda amablemente por vos
 
 =item visto
 
-Sintaxis: visto nick 
+Sintaxis: visto nick
 
 =item contarle
 
@@ -787,9 +787,9 @@ Sintaxis: contarle a nick tema
 =item debian
 
 Las funciones Debian
-debian paquete rama package_name 
-debian version package_name 
-debian bug bug_number : Mostrar info respecto a ese bug 
+debian paquete rama package_name
+debian version package_name
+debian bug bug_number : Mostrar info respecto a ese bug
 
 =item nickserv
 
@@ -815,7 +815,7 @@ sub searchpack {
                 $packs .= $_;
             }
 	}
-    
+
 	if(!$packs) { return undef }
 	$packs =~ s/Package://g;
 	$packs =~ s/^\ +//;
@@ -839,7 +839,7 @@ sub querypack {
     my $version;
 
     eval #try
-    { 
+    {
 	foreach (@dists) {
             $version = `for i in \$(ls debian-packages/$_.gz) ; do zcat \$i | grep -A 6 "Package: $pack" | grep Version ; done`;
             if ($version) {
@@ -862,7 +862,7 @@ sub querybug {
     my $soap;
     my $refbug;
     my $msgout;
-    
+
     eval #try
     {
         $soap = SOAP::Lite->uri('Debbugs/SOAP')->proxy('http://bugs.debian.org/cgi-bin/soap.cgi');
@@ -930,8 +930,8 @@ sub checkignore {
 
 =item action
 
-action list 
-action id_accion le_hace_algo_a NICK algo_mas 
+action list
+action id_accion le_hace_algo_a NICK algo_mas
 action id_accion nick
 action random nick
 action olvidar id_acccion
@@ -939,8 +939,8 @@ action olvidar id_acccion
 =cut
 
 sub actionlist {
-	my ($nick, $usenick, $priv, $channel) = @_;; 
-	my $who = $nick; 
+	my ($nick, $usenick, $priv, $channel) = @_;;
+	my $who = $nick;
 	$who =~ s/^\w+ //;
 	my @rest;
 	my $sth = $dbh->prepare
@@ -974,7 +974,7 @@ sub actionlist {
             #if is not priv -> just show the fist 350 characters
             &say ("@rest", "$nick", $usenick, $priv) unless $channel;
         }
-        
+
 	if ($channel) {
 		$nick =~ s/^\ //;
 		&faction("$nick", $channel, "$rest[int rand @rest] $nick");
@@ -1014,7 +1014,7 @@ sub faction {
         $sth->execute();
 	my $row = $sth->fetchrow;
 	if ($row) {
-		if (($msg!~m/\w+ \w+./) | ($msg=~m/$bconf{$bnick}/))  { 
+		if (($msg!~m/\w+ \w+./) | ($msg=~m/$bconf{$bnick}/))  {
 			$row =~ s/NICK/$nick/;
 			&doaction("$channel", "$row POR MAJE!");
 			return undef
@@ -1079,9 +1079,9 @@ sub actionsearch {
 
 =item quote
 
-quote add the_quote 
-quote random 
-quote nick 
+quote add the_quote
+quote random
+quote nick
 
 =cut
 
@@ -1144,7 +1144,7 @@ sub requestNickServ {
     my $nick = shift;
 
     &forgetNickServ($nick);
-    
+
     $irc->yield( privmsg => "NickServ", "ACC $nick");
 }
 #only for freenode
@@ -1176,7 +1176,7 @@ sub authen {
 	if ($dbpass) {
 		if ($dbpass eq $gpass) {
 			$dbh->do("UPDATE users SET perm='aut' WHERE nick='$nick'");
-			return "ok"; 
+			return "ok";
 		} else { return undef }
 	}
 }
@@ -1283,7 +1283,7 @@ sub temblor {
 
 =item corregir
 
-Sintaxis: s/palabro/palabra/ 
+Sintaxis: s/palabro/palabra/
 
 =cut
 
@@ -1314,8 +1314,8 @@ sub correctuser {
 
 =item aprender
 
-aprender que id es definicion_de_id 
-olvidar id 
+aprender que id es definicion_de_id
+olvidar id
 
 =cut
 
@@ -1341,16 +1341,16 @@ sub fffact {
 	   ("SELECT fulltext from facts where fact='$lfact'");
 	$sth->execute();
 	my $row = $sth->fetchrow;
-	if ($row) { 
-		$row =~ s/^\ +//; 
-		return $row 
+	if ($row) {
+		$row =~ s/^\ +//;
+		return $row
 	} else { return undef }
 
 }
 
 =item karma
 
-Sintaxis: karma nick 
+Sintaxis: karma nick
 
 =cut
 
@@ -1408,7 +1408,7 @@ sub dbuexist {
 sub dblog {
 	my ($nick, $msg) = @_;
 	$msg =~ s/'//g;
-	my @seen = &dbuexist($nick); 
+	my @seen = &dbuexist($nick);
 	if ($seen[0]) {
 		$dbh->do("UPDATE users SET seen=datetime('now','localtime'), last='$msg' WHERE nick='$nick'");
 	} else {
@@ -1419,8 +1419,8 @@ sub dblog {
 
 =item definir
 
-Sintaxis: definir palabra 
-Veamos que dice la wikipedia 
+Sintaxis: definir palabra
+Veamos que dice la wikipedia
 
 =cut
 
@@ -1431,7 +1431,7 @@ sub definir {
 	$wiki->language( 'es' );
 	$wiki->follow_redirects('on');
 	my $result = $wiki->search ("$word") ;
-	my $out; 
+	my $out;
 	if ($result) {
 	   if ($result->text()){
 		$out = $result->text();
@@ -1443,7 +1443,7 @@ sub definir {
 	   #$out =~ s/(.*?).\]\]//g;
 	   #$out = substr($out, 0, 199);
 	   #### ^^^^^ those works
-	   
+
 	   $out =~  s/\n+/ /g; #remove all newlines and use spaces
 	   $out =~ s/\{.+.\}|<!.+->//g; # remove html comments and wiki markdown
 	   $out =~ s/<ref.+>(.*?)<\/ref>//g; # reftag
@@ -1474,7 +1474,7 @@ sub descifrar {
         # else {
         #     $word = $search->error->reason;
         # }
-        
+
 	return $word;
 }
 
@@ -1560,7 +1560,7 @@ sub pipiancatch {
 	my $row = $sth->fetchrow;
 	if ( $action =~ m/pipian\+\+/ ){
 	    $row++;
-	} 
+	}
 	$dbh->do("UPDATE users SET pipianlvl='$row' WHERE nick='$creepy'");
     }
 }
@@ -1662,7 +1662,7 @@ sub kick {
 
 =item help
 
-Sintaxis: help 
+Sintaxis: help
 help comando
 Muestra la ayuda :)
 
