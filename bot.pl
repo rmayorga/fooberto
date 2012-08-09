@@ -19,6 +19,7 @@ use XML::Simple;
 use Net::Identica;
 use Encode;
 use POSIX;
+use pQuery; # Added to extract the body tag from RAE search.
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -574,6 +575,16 @@ sub on_public {
                        &say($out, $nick, $usenick, $priv);
                    }
 		}
+		elsif ($msg =~ s/^rae//) {
+           if (length($msg) >= 1) {
+                my $out = &rae($msg);
+            if ($out) {
+                &say("$out", $nick, $usenick, $priv);
+            } else {
+               &say("err, no encontre $msg", $nick, $usenick, $priv);
+            }
+           }
+        }
 		else {  
 			$msg =~ s/^\ +//g;
 			$msg =~ s/\'//g;
@@ -1459,6 +1470,30 @@ sub definir {
 	   return "$out...";
 	}
 }
+
+=item rae
+
+Sintaxis: rae palabra
+Define la palabre según la Real Academia de la Lengua Española
+
+=cut
+
+sub rae {
+
+	binmode(STDOUT, ":utf-8");
+    my $out;
+    my $word = shift;
+    my $content = get("http://lema.rae.es/drae/srv/search?val=${word}&val_aux=&origen=RAE");
+	my $page = pQuery($content);
+	if($page){
+		my $text = $page->find('body')->each(sub {
+			$out = pQuery($_)->text();
+		});
+		$out = substr($out, 0, 199);
+		return "$out...";
+	}
+}
+
 sub descifrar {
         #replacing soap api by the new ajax api
 	# my $search = shift;
