@@ -1394,9 +1394,15 @@ sub temblor {
  Sintaxis: tiny <url>
 =cut
 sub tiny{
-        my $direccion = shift;
-        my $out = "";
-        my $consulta = HTTP::Request->new(GET => 'http://tinyurl.com/api-create.php?url='.$direccion);
+    my $direccion = shift;
+    my $out = "";
+
+    # This api requires the protocol http in the string
+    if ($direccion !~ m/^http/i) {
+        $direccion = "http://".$direccion;
+    }
+
+    my $consulta = HTTP::Request->new(GET => 'http://tinyurl.com/api-create.php?url='.$direccion);
 
     my $agente = LWP::UserAgent->new;
     my $respuesta = $agente->request($consulta);
