@@ -1384,7 +1384,7 @@ sub temblor {
 	return $out;
 }
 
-=item corregir
+=item tiny
 
  Esta funcion se encarga de tomar una direccion URL y devuelve como resultado el hash
  devuelto por el sitio http://tinyurl.com del correspondiente URL.
@@ -1408,7 +1408,7 @@ sub tiny{
     return $out;
 }
 
-=item corregir
+=item news
  Esta funcion hace un search en las Top News de AP y devuelve una de ellas aleatoriamente
  El resultado incluye el titulo de la noticia, asi como el tinyURL hacia la misma
  en el sitio de AP.
