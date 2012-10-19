@@ -17,7 +17,7 @@ use LWP::Simple;
 use LWP::UserAgent;
 use HTML::Entities;
 use HTTP::Request;
-Use HTTP::Response;
+use HTTP::Response;
 use XML::Simple;
 use Net::Twitter;
 use Encode;
@@ -455,6 +455,7 @@ sub on_public {
 			}else {
 				&say("hmmm, ahí no ha temblado en los últimos 7 días", $nick, $usenick, $priv);
 			}
+                }
 		elsif ($msg =~ s/^news//){
 			my $out = &news();
 			if ($out) {
@@ -471,6 +472,7 @@ sub on_public {
 			}else {
 				&say("err, tinyurl parece estar teniendo problemas", $nick, $usenick, $priv);
 			}
+                }
 		elsif ($msg =~ m/contarle\ a\ \w.+ acerca\ de/) {
 			$msg =~ s/contarle\ a\ //;
 			$msg =~ s/acerca\ de//;
@@ -1394,10 +1396,10 @@ sub temblor {
 sub tiny{
         my $direccion = shift;
         my $out = "";
-        $consulta = HTTP::Request->new(GET => 'http://tinyurl.com/api-create.php?url='.$direccion);
+        my $consulta = HTTP::Request->new(GET => 'http://tinyurl.com/api-create.php?url='.$direccion);
 
-    $agente = LWP::UserAgent->new;
-    $respuesta = $agente->request($consulta);
+    my $agente = LWP::UserAgent->new;
+    my $respuesta = $agente->request($consulta);
 
     if ($respuesta->is_success) {
         $out = $respuesta->decoded_content;
@@ -1409,6 +1411,7 @@ sub tiny{
 }
 
 =item news
+
  Esta funcion hace un search en las Top News de AP y devuelve una de ellas aleatoriamente
  El resultado incluye el titulo de la noticia, asi como el tinyURL hacia la misma
  en el sitio de AP.
@@ -1424,7 +1427,7 @@ sub news{
         my @links = ();
         foreach (split ('<entry>', $page))
         {
-           $content = $_;
+           my $content = $_;
            if ($content =~ /rel\=\"bookmark\">(.*?)</s)
            {
                 push @titles,$1;
@@ -1438,8 +1441,8 @@ sub news{
         {
             return 'err, no encontre noticias';
         }
-        $index = int rand @titles;
-        $dir = &tiny($links[$index+1]);
+        my $index = int rand @titles;
+        my $dir = &tiny($links[$index+1]);
 
         $out = substr($titles[$index],0,199).' | '.$dir;
         return $out;
