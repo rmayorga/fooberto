@@ -1705,7 +1705,8 @@ sub google {
 
         my $search_string = shift;
         my $answer;
-        my $search = Google::Search->Web(q => $search_string, key => $local_google_key, referer => $local_google_referer);
+        #my $search = Google::Search->Web(q => $search_string, key => $local_google_key, referer => $local_google_referer);
+        my $search = Google::Search->Web(q => $search_string, referer => $local_google_referer);
         my $result = $search->first;
         if ($result) {
             $answer = $result->uri;
