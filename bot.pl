@@ -4,6 +4,9 @@ use strict;
 use integer;
 use POE;
 use POE::Component::IRC;
+use POE qw(Component::IRC::State);
+use POE qw(Component::IRC::State Component::IRC::Plugin::AutoJoin);
+
 #use Net::Google; #thiw was replaced by Google::search /jmas
 use Google::Search;
 use SOAP::Lite;
@@ -103,10 +106,11 @@ my $printOrSay = 0; #0 print it for debug. 1 say it in the channel
 
 sub CHANNEL () { "$bconf{$bchan}" }
 
-my ($irc) = POE::Component::IRC->spawn();
+my ($irc) = POE::Component::IRC::State->spawn();
+
 
 POE::Session->create(
-    inline_states => {
+   inline_states => {
         _start     => \&bot_start,
         irc_001    => \&on_connect,
         irc_public => \&on_public,
@@ -134,6 +138,8 @@ sub bot_start{
             Ircname  => "$bconf{$birname}",
             Server   => "$bconf{$bserv}",
             Port     => '6667',
+	    debug    => 'true',
+	    plugin_debug => 1,
           }
     );
 }
@@ -156,7 +162,14 @@ my $twitter = Net::Twitter->new();
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
     $irc->yield( join => CHANNEL );
+    my %channels = %{ $irc->channels() };
+    $irc->plugin_add('AutoJoin', 
+	POE::Component::IRC::Plugin::AutoJoin->new( 
+		Channels => \%channels,
+		RejoinOnKick => 1 ));
+#
 }
+
 
 # The bot has received a public message.  Parse it for commands, and
 # respond to interesting things.
@@ -802,6 +815,7 @@ sub on_kick{
 
     #print "Me acaban de informar nick: $nickKicked, a sido pateado (kick) por $nickOP msg: $msg\n";#debug
     #print "$nickKicked kick, calling forgetNickServ.\n";#debug
+    &say("Uff... por fin... ya ere hora", $nickKicked, 'no', 'no');
 
     &forgetNickServ($nickKicked);
 
