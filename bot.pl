@@ -6,6 +6,7 @@ use POE;
 use POE::Component::IRC;
 use POE qw(Component::IRC::State);
 use POE qw(Component::IRC::State Component::IRC::Plugin::AutoJoin);
+use POE qw(Component::IRC Component::IRC::Plugin::NickReclaim);
 
 #use Net::Google; #thiw was replaced by Google::search /jmas
 use Google::Search;
@@ -130,6 +131,8 @@ sub bot_start{
     my $session = $_[SESSION];
 
     $irc->yield( register => "all" );
+    $irc->plugin_add( 'NickReclaim' =>
+         POE::Component::IRC::Plugin::NickReclaim->new( poll => 30 ) );
 
 # TODO use alternative nicknames
 	$irc->yield( connect =>
