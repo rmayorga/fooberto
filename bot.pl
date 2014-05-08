@@ -7,8 +7,6 @@ use POE::Component::IRC;
 use POE qw(Component::IRC::State);
 use POE qw(Component::IRC::State Component::IRC::Plugin::AutoJoin);
 use POE qw(Component::IRC Component::IRC::Plugin::NickReclaim);
-
-#use Net::Google; #thiw was replaced by Google::search /jmas
 use Google::Search;
 use SOAP::Lite;
 use WWW::Wikipedia;
@@ -29,7 +27,7 @@ use POSIX;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
-my $pom = $parser->parse_file("bot.pl")
+my $pom = $parser->parse_file("$0") #using perlvar //rmay
     || die $parser->error();
 # examine any warnings raised
 foreach my $warning ($parser->warnings()) {
@@ -45,6 +43,36 @@ An irc bot
 
 This is fooberto, a deeply fun irc robot.
 
+=AUTHOR
+Freenode nicknames:
+jmaslibre
+aranax
+jotamjr
+fcodiaz
+worellana
+rmayorga
+
+
+= COPYRIGHT AND LICENSE
+Copyright 2011 Rene Mayorga <rmayorga@debian.org.sv>
+
+License: Artistic
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the Artistic License, which comes with Perl.
+ .
+ On Debian systems, the complete text of the Artistic License can be
+ found in `/usr/share/common-licenses/Artistic'.
+
+License: GPL-1+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 1, or (at your option)
+ any later version.
+ .
+ On Debian systems, the complete text of version 1 of the GNU General
+ Public License can be found in `/usr/share/common-licenses/GPL-1'.
+
+
 =head2 METHODS
 
 Fooberto implements the following methods:
@@ -54,7 +82,6 @@ Fooberto implements the following methods:
 # Just one option at this momment
 our($opt_c);
 getopts('c:');
-# this is a config file
 # Load Config file
 my %bconf;
 my $cnfile;
@@ -84,11 +111,11 @@ my $probab = "RESPONSES.probable";
 my $factran = "RESPONSES.facts";
 my $debbranch = "DEBIAN.branches";
 
-# more ugly options
-my $bgkey = "BOT.google_key";
+# TEST
+#my $bgkey = "BOT.google_key";
 my $bgreferer = "BOT.google_referer";
 
-# and even more ugly options
+# UPDATE OR GONE
 my $biuser = "IDENTICA.user";
 my $bipass = "IDENTICA.pass";
 my $bishowNick = "IDENTICA.showNick";
@@ -96,16 +123,21 @@ my $bicheckNickserv = "IDENTICA.checkNickserv";
 my $bionlyElite = "IDENTICA.onlyElite";
 
 # unnecesary but funny options
+# Review global values 
 my @jugadores;
 my $cargada=0;
 my $contRul=-1;
 my $indRul;
 
-# ugly array to track nickserv identified nicks
+# rray to track nickserv identified nicks
 my %hashNicks = ();
 my $printOrSay = 0; #0 print it for debug. 1 say it in the channel
 
+
+# Why we need this ?
 sub CHANNEL () { "$bconf{$bchan}" }
+
+
 
 my ($irc) = POE::Component::IRC::State->spawn();
 
@@ -134,7 +166,6 @@ sub bot_start{
     $irc->plugin_add( 'NickReclaim' =>
          POE::Component::IRC::Plugin::NickReclaim->new( poll => 30 ) );
 
-# TODO use alternative nicknames
 	$irc->yield( connect =>
           { Nick => "$bconf{$bnick}",
             Username => "$bconf{$buname}",
@@ -1703,13 +1734,10 @@ sub google {
 	# foreach (@{$goosh->results()}) {
 	# 	$answer = $_->URL();
 	# }
-        my $local_google_key = "$bconf{$bgkey}";
-        my $local_google_referer = "$bconf{$bgreferer}";
 
         my $search_string = shift;
         my $answer;
-        #my $search = Google::Search->Web(q => $search_string, key => $local_google_key, referer => $local_google_referer);
-        my $search = Google::Search->Web(q => $search_string, referer => $local_google_referer);
+        my $search = Google::Search->Web(q => $search_string);
         my $result = $search->first;
         if ($result) {
             $answer = $result->uri;
