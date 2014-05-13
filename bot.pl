@@ -2,6 +2,8 @@
 use warnings;
 use strict;
 use integer;
+use Storable;
+use File::Spec;
 use POE;
 use POE::Component::IRC;
 use POE qw(Component::IRC::State);
@@ -115,12 +117,13 @@ my $debbranch = "DEBIAN.branches";
 #my $bgkey = "BOT.google_key";
 my $bgreferer = "BOT.google_referer";
 
-# UPDATE OR GONE
-my $biuser = "IDENTICA.user";
-my $bipass = "IDENTICA.pass";
+# Clean up need it here
 my $bishowNick = "IDENTICA.showNick";
 my $bicheckNickserv = "IDENTICA.checkNickserv";
 my $bionlyElite = "IDENTICA.onlyElite";
+
+my $ckey = "TWITTER.ckey";
+my $csecret = "TWITTER.csecret";
 
 # unnecesary but funny options
 # Review global values 
@@ -178,20 +181,38 @@ sub bot_start{
     );
 }
 
-# Creating object to manage Identi.ca API if configuration variables exist
-my $identica;
-if (defined ($biuser && $bipass)) {
-    $identica = Net::Twitter->new(
-      legacy   => 1,
-      identica => 1,
-	    username => $bconf{$biuser},
-	    password => $bconf{$bipass}, 
-	    source => '');
-    $identica = undef unless $identica->verify_credentials;
-} else { $identica = undef; }
+my %twitter_tokens = (
+	consumer_key => "$bconf{$ckey}",
+	consumer_secret => "$bconf{$csecret}",
+	ssl             => '1',
+);
 
-# most attributes are optional, and we enable legacy mode
-my $twitter = Net::Twitter->new();
+
+my (undef, undef, $datafile) = File::Spec->splitpath($0);
+$datafile =~ s/\..*/.dat/;
+
+my $twitter = Net::Twitter->new(traits => [qw/API::RESTv1_1/], %twitter_tokens);
+my $access_tokens = eval { retrieve($datafile) } || [];
+
+if ( @$access_tokens ) {
+    $twitter->access_token($access_tokens->[0]);
+    $twitter->access_token_secret($access_tokens->[1]);
+} else {
+	    my $auth_url = $twitter->get_authorization_url;
+    print "\n1. Authorize the Twitter App at: $auth_url\n2. Enter the returned PIN to complete the Twitter App authorization process: ";
+
+    my $pin = <STDIN>; # wait for input
+    chomp $pin;
+    print "\n";
+
+   #  request_access_token stores the tokens in $nt AND returns them
+    my @access_tokens = $twitter->request_access_token(verifier => $pin);
+
+    # save the access tokens
+    store \@access_tokens, $datafile;
+}
+
+
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
@@ -531,44 +552,6 @@ sub on_public {
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
 		}
-		elsif ($msg =~ m/^identica say (.+)/) {
-		    chomp($1);
-
-                    my $check = undef;
-                    my $checkNick = undef;
-
-                    if ( defined($bconf{$bionlyElite}) && ($bconf{$bionlyElite} eq 'true') )
-                    {
-                        $check = &checkauth($nick);#check if it is an authorized user
-                    }
-                    else
-                    {
-                        $check = 'ok';
-                    }
-                    #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-                    if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-                    {
-                        $checkNick = &checkNickServ($nick);#check if the nick is identified
-                    }
-                    else
-                    {
-                        $checkNick = 'ok';
-                    }
-
-                    #print "is $nick an authorized user?: $check\n";#debug
-                    
-                    if( ($check) && ($checkNick) )
-                    {
-                        if ($identica) {
-                            my $text = &identica_say($1,$nick);
-                            &say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
-                        } else {
-                            &say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
-                        }
-                        #de-autenticate user (nickserv)
-                        &forgetNickServ($nick);
-                    }
-		}
                 elsif ($msg =~ s/^nickserv//) {
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
                     $msg =~ s/^\ +//g;
@@ -585,46 +568,22 @@ sub on_public {
                         &requestNickServ($nick);
                     }
 		}
-		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
-		    chomp($1) if defined $1;
-		    if ($identica) {
-			my ($user, $dent);
-			if ($1) {
-			    ($user, $dent) = &identica_pull($1); 
-			} else { 
-			    ($user, $dent) = &identica_pull();
-			}
-			if ($user && $dent){
-			    &say("en identi.ca \@$user dijo: $dent", $nick, $usenick, $priv);
-			} else {
-			    unless ($dent) {
-				&say("probablemente el usuario \@$user no este registrado en identi.ca :D", $nick, $usenick, $priv);
-			    } else {
-				&say("ergg un error con mi conexion a identi.ca seguramente :\\", $nick, $usenick, $priv);
-			    }
-			}
-		    } else {
-			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
-		    }
-		}
 		elsif ($msg =~ m/^tuiter pull$|^tuiter pull (\w+)/) {
 			chomp($1) if defined $1;
 			if ($twitter) {
 			my ($user, $dent);
 			if ($1) {
-				($user, $dent) = &identica_pull($1, $twitter); 
+				($dent) = &identica_pull($1, $twitter); 
 			} 
-			if ($user && $dent){
-			    &say("en tuiter \@$user dijo: $dent", $nick, $usenick, $priv);
+			if ($dent){
+			    &say("en tuiter \@$1 dijo: $dent", $nick, $usenick, $priv);
 			} else {
 			    unless ($dent) {
-				&say("probablemente el usuario \@$user no este registrado en tuiter :D", $nick, $usenick, $priv);
+				&say("probablemente el usuario \@$1 no este registrado en tuiter, o tiene candadito", $nick, $usenick, $priv);
 			    } else {
 				&say("ergg un error con mi conexion seguramente :\\", $nick, $usenick, $priv);
 			    }
 			}
-		    } else {
-			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
 		}
 		elsif($msg =~ s/^cargar//) {
@@ -1815,54 +1774,21 @@ sub getpipianlvl {
     return $row;
 }
 
-=item identica
-
-Las funciones de Identica
-identica say mensaje
-identica pull | identica pull foo
-
-=cut
-
-sub identica_say {
-    my ($message,$nick) = @_;
-
-    if(defined($bconf{$bishowNick}) && ($bconf{$bishowNick} eq 'true'))
-    {
-        $message = $message." (vía \@$nick)";
-    }
-
-    my $size = length($message);
-    if ($size <= 140){
-	$message = decode("utf-8", $message);
-	return $message if $identica->update("$message");
-    }else{
-	return undef;
-    }
-}
-
+# More cleaning need it in order to remove identica
 sub identica_pull {
 	my $nick   = shift @_;
-	my $server = shift @_;
-	if (!$server) {
-		$server = $identica;
+	my $server = shift @_; # Server needs to be removed
+	my $twitR;
+	print "I'll look for $nick\n";
+	eval {my $status = $twitter->lookup_users( {screen_name => $nick });};
+	if ($@) {return undef}
+	my $status = $twitter->lookup_users( {screen_name => $nick });
+	foreach my $results ( @{ $status }) {
+            print "Tuit: $results->{'status'}->{text}\n";
+	    $twitR = $results->{'status'}->{text}
 	}
-	if ($nick) {
-		my $fetch = $server->user_timeline({screen_name => $nick});
-		my $last_status = shift( @$fetch );
-		if ($last_status) {
-			my $dent = encode("utf-8", ${$last_status}{"text"});
-			return (${$last_status}{user}{"screen_name"}, $dent);
-		} else { return ($nick, undef); }
-	} else {
-		my $fetch = $server->home_timeline;
-		if ($fetch){
-			my $last_status = shift( @$fetch );
-			if ($last_status) {
-				my $dent = encode("utf-8", ${$last_status}{"text"});
-				return (${$last_status}{user}{"screen_name"}, $dent);
-			}
-		} else { return (undef, undef); }
-	}
+	return ($twitR, undef);
+
 }
 
 sub doaction {
