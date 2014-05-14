@@ -803,7 +803,7 @@ sub on_kick{
     #print "$nickKicked kick, calling forgetNickServ.\n";#debug
     &say("Uff... por fin... ya ere hora", $nickKicked, 'no', 'no');
 
-    &forgetNickServ($nickKicked);
+    #&forgetNickServ($nickKicked);
 
     # print ouput to screen and also log it
     my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
