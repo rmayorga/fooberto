@@ -219,7 +219,7 @@ sub on_connect {
 # The bot has received a public message.  Parse it for commands, and
 # respond to interesting things.
 sub on_public {
-    my ( $kernel, $who, $where, $msg ) = @_[ KERNEL, ARG0, ARG1, ARG2 ];
+    my ( $kernel, $who, $where, $msg, $authe ) = @_[ KERNEL, ARG0, ARG1, ARG2, ARG3 ];
     my $nick = ( split /!/, $who )[0];
     my $channel = $where->[0];
 
@@ -369,7 +369,7 @@ sub on_public {
 			   	&forgetfact($nick, $msg)  #unless( !$isfact);
 			   }
 		   }
-		}
+		} ## This needs to go?
 		elsif ($msg =~ s/^identify//) {
 		   $msg =~ s/\ +//g;
 		   if (length($msg) >= 1) {
@@ -387,8 +387,9 @@ sub on_public {
 		   if ($msg =~s/^blame//) { &actionblame($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 
                    #check if the user is in the elite group
-		   my $check = &checkauth($nick);
+		   my $check = &checkauth($nick, $authe);
 
+		   # Get rid of this in the future
                    #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
                    my $checkNick = undef;
                     if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
@@ -413,7 +414,7 @@ sub on_public {
 		}
 		elsif ($msg=~ s/^ignorar//) {
 			$msg =~ s/^\ //;
-			my $check = &checkauth($nick);
+			my $check = &checkauth($nick, $authe); # Test
 			if($check) {
 				&addignore($nick, $msg);
 			}
@@ -421,7 +422,7 @@ sub on_public {
 		}
 		elsif ($msg=~ s/^perdonar//) {
 			$msg =~ s/^\ //;
-			my $check = &checkauth($nick);
+			my $check = &checkauth($nick, $authe);
 			if($check) {
 				&forgetignore($msg);
 			}
@@ -451,7 +452,7 @@ sub on_public {
 		elsif ($msg =~ s/^quote//) {
 		   $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
-			   my $check = &checkauth($nick);
+			   my $check = &checkauth($nick, $authe);
 			   if ($msg =~ s/^add//) {
 				   if ($check) {
 					   &quoteadd("$msg", $nick);
@@ -542,7 +543,7 @@ sub on_public {
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
 		}
-                elsif ($msg =~ s/^nickserv//) {
+                elsif ($msg =~ s/^nickserv//) { ### GET RID OF THIS
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
                     $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
@@ -668,10 +669,9 @@ sub on_notice{
     $nick =~ s/\'//g;
     $msg =~ s/\'//g;
 
-    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+   # &say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
 
     my @answer = split(/\s+/, $msg);
-
     #is this an answer to a ACC request to nickserv? (admin comand)
     if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
     {
@@ -711,8 +711,9 @@ sub on_join{
     $nick =~ s/\'//g;
 
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-
-    &requestNickServ($nick);
+    
+    # We need to get rid off this:
+    #&requestNickServ($nick);
 }
 
 #Sent whenever you, or someone around you, changes nicks.
@@ -731,6 +732,7 @@ sub on_nick{
     $newNick =~ s/\'//g;
 
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    # Get rid of this
     &forgetNickServ($oldNick);
     &requestNickServ($newNick);
 }
@@ -1234,7 +1236,8 @@ sub quoteadd {
 }
 
 sub checkauth {
-	my $nick = shift;
+	my ($nick, $authe) = @_;
+	if (!$authe) { return undef } else { print "Auth = $authe\n"; }; # Nick Validation
 	my $sth = $dbh->prepare
 	    ("SELECT perm from users where nick='$nick'");
 	$sth->execute();
@@ -1242,7 +1245,7 @@ sub checkauth {
 	if ($ok) { return "ok" } else { return undef }
 }
 
-#check if user is identified (nickserv)
+#check if user is identified (nickserv) -- get rid of this
 sub requestNickServ {
     my $nick = shift;
 
