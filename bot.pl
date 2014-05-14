@@ -734,8 +734,8 @@ sub on_nick{
 
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
     # Get rid of this
-    &forgetNickServ($oldNick);
-    &requestNickServ($newNick);
+   # &forgetNickServ($oldNick);
+   # &requestNickServ($newNick);
 }
 
 #Sent whenever someone leaves a channel that you're on
@@ -757,7 +757,7 @@ sub on_part{
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
     #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
     #print "$nick part, calling forgetNickServ.\n";#debug
-    &forgetNickServ($nick);
+    #&forgetNickServ($nick);
 }
 
 
@@ -777,7 +777,7 @@ sub on_quit{
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
     #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
     #print "$nick quit, calling forgetNickServ.\n";#debug
-    &forgetNickServ($nick);
+    #&forgetNickServ($nick);
 }
 
 #Sent whenever someone gets booted off a channel that you're on
