@@ -46,7 +46,7 @@ An irc bot
 This is fooberto, a deeply fun irc robot.
 
 = COPYRIGHT AND LICENSE
-Copyright 2011 Rene Mayorga <rmayorga@debian.org.sv>
+Copyright (C) 2011-2014 Rene Mayorga E<lt>rmayorga@debian.org.svE<gt>
 
 License: Artistic
  This program is free software; you can redistribute it and/or modify
