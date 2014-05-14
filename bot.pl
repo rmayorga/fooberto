@@ -1728,6 +1728,8 @@ sub say {
 	my ($msg, $nick, $usenick, $priv ) = @_;
 	my $channel = $bconf{$bchan};
 	$channel = "$nick" if $priv eq 'yes';
+ 	#Handle encoding
+	$msg = encode_utf8($msg);
 	if ($usenick eq 'yes') {
 		$irc->yield( privmsg => $channel, "$nick: $msg");
 	} else {
