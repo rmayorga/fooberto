@@ -386,27 +386,27 @@ sub on_public {
 		   if ($msg =~s/^search//) { &actionsearch($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 		   if ($msg =~s/^blame//) { &actionblame($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 
-                   #check if the user is in the elite group
+                   #check if the user is in the elite group and Authenticated
 		   my $check = &checkauth($nick, $authe);
 
 		   # Get rid of this in the future
                    #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-                   my $checkNick = undef;
-                    if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-                    {
-                        $checkNick = &checkNickServ($nick);#check if the nick is identified
-                    }
-                    else
-                    {
-                        $checkNick = 'ok';
-                    }
+                   #my $checkNick = undef;
+                   # if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+                   # {
+                   #     $checkNick = &checkNickServ($nick);#check if the nick is identified
+                   # }
+                   # else
+                   # {
+                   #     $checkNick = 'ok';
+                   # }
                    
-                   if (($checkNick) && ($check) && ($msg =~s/^olvidar//)) {
+                   if (($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
                        &forgetaction($nick, $msg);
                        $add = 'no';
                    }
-		   if (($checkNick) && ($check) && (!$add))  {
+		   if (($check) && (!$add))  {
 		   	if (length($msg) >= 1) {
 				&actionadd($msg, $nick)
 		  	 }
@@ -672,31 +672,32 @@ sub on_notice{
    # &say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
 
     my @answer = split(/\s+/, $msg);
+    # OLD Authentication Method, needs to be removed
     #is this an answer to a ACC request to nickserv? (admin comand)
-    if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
-    {
-        if($answer[2] == 3){
-            if($printOrSay == 1){
-                &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
-                $printOrSay = 0; #say it in the channel only once
-            }
-            else {
-                print "$answer[0] se ha autenticado.\n";
-            }
+    #if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
+    #{
+    #   if($answer[2] == 3){
+    #        if($printOrSay == 1){
+    #            &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
+    #            $printOrSay = 0; #say it in the channel only once
+    #        }
+    #        else {
+    #            print "$answer[0] se ha autenticado.\n";
+    #        }
             #Here you should do whatever it takes to mark that this nick is identified
             $hashNicks{ $answer[0] } = 1;#autenticated
-        }
-        else{
-           if($printOrSay == 1){
-               &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
-               $printOrSay = 0; #say it in the channel only once
-           }
-           else {
-               print "ergg! $answer[0] no se ha autenticado con NickServ.\n";
-           }
-               $hashNicks{ $answer[0] } = 0;#NOT autenticated
-        }
-    }
+    #    }
+    #    else{
+    #       if($printOrSay == 1){
+    #           &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
+    #           $printOrSay = 0; #say it in the channel only once
+    #       }
+    #       else {
+    #           print "ergg! $answer[0] no se ha autenticado con NickServ.\n";
+    #       }
+    #           $hashNicks{ $answer[0] } = 0;#NOT autenticated
+    #    }
+    #}
 }
 
 sub on_join{
@@ -965,6 +966,7 @@ Sintaxis: perdonar nick
 
 sub forgetignore  {
 	my $msg = shift;
+	print "$msg vamos";
         my $sth = $dbh->prepare
             ("SELECT rowid from igno where nick='$msg'");
         $sth->execute();
@@ -1253,24 +1255,24 @@ sub requestNickServ {
     
     $irc->yield( privmsg => "NickServ", "ACC $nick");
 }
-#only for freenode
-sub checkNickServ {
-    my $nick = shift;
-
-    if(defined($hashNicks{ $nick })){
-        if($hashNicks{ $nick } == 1){
+#only for freenode -- DELETE IT
+#sub checkNickServ {
+#    my $nick = shift;
+#
+#    if(defined($hashNicks{ $nick })){
+#        if($hashNicks{ $nick } == 1){
             #print "$nick esta Identificado con Nickserv\n";#debug
-            return "ok";
-        }
-    }
+#            return "ok";
+#        }
+#    }
     #print "$nick NO esta Identificado con Nickserv\n";#debug
-    return undef;
-}
+#    return undef;
+#}
 
-sub forgetNickServ {
-    my $nick = shift;
-    $hashNicks{ $nick } = 0;
-}
+#sub forgetNickServ {
+#    my $nick = shift;
+#    $hashNicks{ $nick } = 0;
+#}
 
 
 sub authen {
@@ -1507,21 +1509,21 @@ sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
 
         #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-        my $checkNick = undef;
-        if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-        {
-            $checkNick = &checkNickServ($nick);#check if the nick is identified
-        }
-        else
-        {
-            $checkNick = 'ok';
-        }
+        #my $checkNick = undef;
+        #if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+        #{
+        #    $checkNick = &checkNickServ($nick);#check if the nick is identified
+        #}
+        #else
+        #{
+        #    $checkNick = 'ok';
+        #}
 
-        if($checkNick)
-        {
+        #if($checkNick)
+        #{
             my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
 	$sth->execute();
-        }
+        #}
 }
 
 sub fffact {
