@@ -45,16 +45,6 @@ An irc bot
 
 This is fooberto, a deeply fun irc robot.
 
-=AUTHOR
-Freenode nicknames:
-jmaslibre
-aranax
-jotamjr
-fcodiaz
-worellana
-rmayorga
-
-
 = COPYRIGHT AND LICENSE
 Copyright 2011 Rene Mayorga <rmayorga@debian.org.sv>
 
@@ -1890,6 +1880,13 @@ exit 0;
 
 =head1 AUTHOR
 
-This program was written by Rene Mayorga E<lt>rmayorga@debian.orgE<gt>
+This program was written by: Rene Mayorga E<lt>rmayorga@debian.org.svE<gt>
+
+And Contributions have being made by:
+Wences Rene Arana Fuentes E<lt>aranaf51@gmail.comE<gt>
+Sebastian Oliva E<lt>tian2992@gmail.comE<gt>
+Jotam Jr. Trejo E<lt>jotamjr@gmail.comE<gt>
+Josue Abarca  E<lt>jmaslibre@debian.org.gtE<gt>
+Francisco Diaz
 
 =cut
