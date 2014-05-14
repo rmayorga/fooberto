@@ -543,22 +543,22 @@ sub on_public {
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
 		}
-                elsif ($msg =~ s/^nickserv//) { ### GET RID OF THIS
+               # elsif ($msg =~ s/^nickserv//) { ### GET RID OF THIS
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
-                    $msg =~ s/^\ +//g;
-		   if (length($msg) >= 1) {
-                       my @seen = &dbuexist($msg);
-                       if ($seen[0]) {
-                           $printOrSay = 1;#show it in the channel
-                           &requestNickServ($msg);
-                       }
-                   }
-                    else{
-                        $printOrSay = 1;#show it in the channel
+                #    $msg =~ s/^\ +//g;
+		 #  if (length($msg) >= 1) {
+                 #      my @seen = &dbuexist($msg);
+                 #      if ($seen[0]) {
+                 #          $printOrSay = 1;#show it in the channel
+                 #          &requestNickServ($msg);
+                 #      }
+                 #  }
+                 #   else{
+                 #       $printOrSay = 1;#show it in the channel
                         #checking with NickServ
-                        &requestNickServ($nick);
-                    }
-		}
+                 #       &requestNickServ($nick);
+                 #   }
+		#}
 		elsif ($msg =~ m/^tuiter pull$|^tuiter pull (\w+)/) {
 			chomp($1) if defined $1;
 			if ($twitter) {
@@ -1248,13 +1248,13 @@ sub checkauth {
 }
 
 #check if user is identified (nickserv) -- get rid of this
-sub requestNickServ {
-    my $nick = shift;
-
-    &forgetNickServ($nick);
-    
-    $irc->yield( privmsg => "NickServ", "ACC $nick");
-}
+#sub requestNickServ {
+#    my $nick = shift;
+#
+#    &forgetNickServ($nick);
+#    
+#    $irc->yield( privmsg => "NickServ", "ACC $nick");
+#}
 #only for freenode -- DELETE IT
 #sub checkNickServ {
 #    my $nick = shift;
