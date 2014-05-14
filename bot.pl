@@ -2,9 +2,13 @@
 use warnings;
 use strict;
 use integer;
+use Storable;
+use File::Spec;
 use POE;
 use POE::Component::IRC;
-#use Net::Google; #thiw was replaced by Google::search /jmas
+use POE qw(Component::IRC::State);
+use POE qw(Component::IRC::State Component::IRC::Plugin::AutoJoin);
+use POE qw(Component::IRC Component::IRC::Plugin::NickReclaim);
 use Google::Search;
 use SOAP::Lite;
 use WWW::Wikipedia;
@@ -25,7 +29,7 @@ use POSIX;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
-my $pom = $parser->parse_file("bot.pl")
+my $pom = $parser->parse_file("$0") #using perlvar //rmay
     || die $parser->error();
 # examine any warnings raised
 foreach my $warning ($parser->warnings()) {
@@ -41,6 +45,26 @@ An irc bot
 
 This is fooberto, a deeply fun irc robot.
 
+= COPYRIGHT AND LICENSE
+Copyright (C) 2011-2014 Rene Mayorga E<lt>rmayorga@debian.org.svE<gt>
+
+License: Artistic
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the Artistic License, which comes with Perl.
+ .
+ On Debian systems, the complete text of the Artistic License can be
+ found in `/usr/share/common-licenses/Artistic'.
+
+License: GPL-1+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 1, or (at your option)
+ any later version.
+ .
+ On Debian systems, the complete text of version 1 of the GNU General
+ Public License can be found in `/usr/share/common-licenses/GPL-1'.
+
+
 =head2 METHODS
 
 Fooberto implements the following methods:
@@ -50,7 +74,6 @@ Fooberto implements the following methods:
 # Just one option at this momment
 our($opt_c);
 getopts('c:');
-# this is a config file
 # Load Config file
 my %bconf;
 my $cnfile;
@@ -80,33 +103,40 @@ my $probab = "RESPONSES.probable";
 my $factran = "RESPONSES.facts";
 my $debbranch = "DEBIAN.branches";
 
-# more ugly options
-my $bgkey = "BOT.google_key";
+# TEST
+#my $bgkey = "BOT.google_key";
 my $bgreferer = "BOT.google_referer";
 
-# and even more ugly options
-my $biuser = "IDENTICA.user";
-my $bipass = "IDENTICA.pass";
+# Clean up need it here
 my $bishowNick = "IDENTICA.showNick";
 my $bicheckNickserv = "IDENTICA.checkNickserv";
 my $bionlyElite = "IDENTICA.onlyElite";
 
+my $ckey = "TWITTER.ckey";
+my $csecret = "TWITTER.csecret";
+
 # unnecesary but funny options
+# Review global values 
 my @jugadores;
 my $cargada=0;
 my $contRul=-1;
 my $indRul;
 
-# ugly array to track nickserv identified nicks
+# rray to track nickserv identified nicks
 my %hashNicks = ();
 my $printOrSay = 0; #0 print it for debug. 1 say it in the channel
 
+
+# Why we need this ?
 sub CHANNEL () { "$bconf{$bchan}" }
 
-my ($irc) = POE::Component::IRC->spawn();
+
+
+my ($irc) = POE::Component::IRC::State->spawn();
+
 
 POE::Session->create(
-    inline_states => {
+   inline_states => {
         _start     => \&bot_start,
         irc_001    => \&on_connect,
         irc_public => \&on_public,
@@ -126,42 +156,70 @@ sub bot_start{
     my $session = $_[SESSION];
 
     $irc->yield( register => "all" );
+    $irc->plugin_add( 'NickReclaim' =>
+         POE::Component::IRC::Plugin::NickReclaim->new( poll => 30 ) );
 
-# TODO use alternative nicknames
 	$irc->yield( connect =>
           { Nick => "$bconf{$bnick}",
             Username => "$bconf{$buname}",
             Ircname  => "$bconf{$birname}",
             Server   => "$bconf{$bserv}",
             Port     => '6667',
+	    debug    => 'true',
+	    plugin_debug => 1,
           }
     );
 }
 
-# Creating object to manage Identi.ca API if configuration variables exist
-my $identica;
-if (defined ($biuser && $bipass)) {
-    $identica = Net::Twitter->new(
-      legacy   => 1,
-      identica => 1,
-	    username => $bconf{$biuser},
-	    password => $bconf{$bipass}, 
-	    source => '');
-    $identica = undef unless $identica->verify_credentials;
-} else { $identica = undef; }
+my %twitter_tokens = (
+	consumer_key => "$bconf{$ckey}",
+	consumer_secret => "$bconf{$csecret}",
+	ssl             => '1',
+);
 
-# most attributes are optional, and we enable legacy mode
-my $twitter = Net::Twitter->new();
+
+my (undef, undef, $datafile) = File::Spec->splitpath($0);
+$datafile =~ s/\..*/.dat/;
+
+my $twitter = Net::Twitter->new(traits => [qw/API::RESTv1_1/], %twitter_tokens);
+my $access_tokens = eval { retrieve($datafile) } || [];
+
+if ( @$access_tokens ) {
+    $twitter->access_token($access_tokens->[0]);
+    $twitter->access_token_secret($access_tokens->[1]);
+} else {
+	    my $auth_url = $twitter->get_authorization_url;
+    print "\n1. Authorize the Twitter App at: $auth_url\n2. Enter the returned PIN to complete the Twitter App authorization process: ";
+
+    my $pin = <STDIN>; # wait for input
+    chomp $pin;
+    print "\n";
+
+   #  request_access_token stores the tokens in $nt AND returns them
+    my @access_tokens = $twitter->request_access_token(verifier => $pin);
+
+    # save the access tokens
+    store \@access_tokens, $datafile;
+}
+
+
 
 # The bot has successfully connected to a server.  Join a channel.
 sub on_connect {
     $irc->yield( join => CHANNEL );
+    my %channels = %{ $irc->channels() };
+    $irc->plugin_add('AutoJoin', 
+	POE::Component::IRC::Plugin::AutoJoin->new( 
+		Channels => \%channels,
+		RejoinOnKick => 1 ));
+#
 }
+
 
 # The bot has received a public message.  Parse it for commands, and
 # respond to interesting things.
 sub on_public {
-    my ( $kernel, $who, $where, $msg ) = @_[ KERNEL, ARG0, ARG1, ARG2 ];
+    my ( $kernel, $who, $where, $msg, $authe ) = @_[ KERNEL, ARG0, ARG1, ARG2, ARG3 ];
     my $nick = ( split /!/, $who )[0];
     my $channel = $where->[0];
 
@@ -311,7 +369,7 @@ sub on_public {
 			   	&forgetfact($nick, $msg)  #unless( !$isfact);
 			   }
 		   }
-		}
+		} ## This needs to go?
 		elsif ($msg =~ s/^identify//) {
 		   $msg =~ s/\ +//g;
 		   if (length($msg) >= 1) {
@@ -328,26 +386,27 @@ sub on_public {
 		   if ($msg =~s/^search//) { &actionsearch($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 		   if ($msg =~s/^blame//) { &actionblame($nick, $usenick, $priv, $channel,$msg); $add = 'no'; }
 
-                   #check if the user is in the elite group
-		   my $check = &checkauth($nick);
+                   #check if the user is in the elite group and Authenticated
+		   my $check = &checkauth($nick, $authe);
 
+		   # Get rid of this in the future
                    #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-                   my $checkNick = undef;
-                    if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-                    {
-                        $checkNick = &checkNickServ($nick);#check if the nick is identified
-                    }
-                    else
-                    {
-                        $checkNick = 'ok';
-                    }
+                   #my $checkNick = undef;
+                   # if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+                   # {
+                   #     $checkNick = &checkNickServ($nick);#check if the nick is identified
+                   # }
+                   # else
+                   # {
+                   #     $checkNick = 'ok';
+                   # }
                    
-                   if (($checkNick) && ($check) && ($msg =~s/^olvidar//)) {
+                   if (($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
                        &forgetaction($nick, $msg);
                        $add = 'no';
                    }
-		   if (($checkNick) && ($check) && (!$add))  {
+		   if (($check) && (!$add))  {
 		   	if (length($msg) >= 1) {
 				&actionadd($msg, $nick)
 		  	 }
@@ -355,7 +414,7 @@ sub on_public {
 		}
 		elsif ($msg=~ s/^ignorar//) {
 			$msg =~ s/^\ //;
-			my $check = &checkauth($nick);
+			my $check = &checkauth($nick, $authe); # Test
 			if($check) {
 				&addignore($nick, $msg);
 			}
@@ -363,7 +422,7 @@ sub on_public {
 		}
 		elsif ($msg=~ s/^perdonar//) {
 			$msg =~ s/^\ //;
-			my $check = &checkauth($nick);
+			my $check = &checkauth($nick, $authe);
 			if($check) {
 				&forgetignore($msg);
 			}
@@ -393,7 +452,7 @@ sub on_public {
 		elsif ($msg =~ s/^quote//) {
 		   $msg =~ s/^\ +//g;
 		   if (length($msg) >= 1) {
-			   my $check = &checkauth($nick);
+			   my $check = &checkauth($nick, $authe);
 			   if ($msg =~ s/^add//) {
 				   if ($check) {
 					   &quoteadd("$msg", $nick);
@@ -484,100 +543,38 @@ sub on_public {
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
 		}
-		elsif ($msg =~ m/^identica say (.+)/) {
-		    chomp($1);
-
-                    my $check = undef;
-                    my $checkNick = undef;
-
-                    if ( defined($bconf{$bionlyElite}) && ($bconf{$bionlyElite} eq 'true') )
-                    {
-                        $check = &checkauth($nick);#check if it is an authorized user
-                    }
-                    else
-                    {
-                        $check = 'ok';
-                    }
-                    #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-                    if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-                    {
-                        $checkNick = &checkNickServ($nick);#check if the nick is identified
-                    }
-                    else
-                    {
-                        $checkNick = 'ok';
-                    }
-
-                    #print "is $nick an authorized user?: $check\n";#debug
-                    
-                    if( ($check) && ($checkNick) )
-                    {
-                        if ($identica) {
-                            my $text = &identica_say($1,$nick);
-                            &say("les comento que *$nick* dijo en identi.ca: $text", $nick, $usenick, 'no') if $text;
-                        } else {
-                            &say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
-                        }
-                        #de-autenticate user (nickserv)
-                        &forgetNickServ($nick);
-                    }
-		}
-                elsif ($msg =~ s/^nickserv//) {
+               # elsif ($msg =~ s/^nickserv//) { ### GET RID OF THIS
                     #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
-                    $msg =~ s/^\ +//g;
-		   if (length($msg) >= 1) {
-                       my @seen = &dbuexist($msg);
-                       if ($seen[0]) {
-                           $printOrSay = 1;#show it in the channel
-                           &requestNickServ($msg);
-                       }
-                   }
-                    else{
-                        $printOrSay = 1;#show it in the channel
+                #    $msg =~ s/^\ +//g;
+		 #  if (length($msg) >= 1) {
+                 #      my @seen = &dbuexist($msg);
+                 #      if ($seen[0]) {
+                 #          $printOrSay = 1;#show it in the channel
+                 #          &requestNickServ($msg);
+                 #      }
+                 #  }
+                 #   else{
+                 #       $printOrSay = 1;#show it in the channel
                         #checking with NickServ
-                        &requestNickServ($nick);
-                    }
-		}
-		elsif ($msg =~ m/^identica pull$|^identica pull (\w+)/) {
-		    chomp($1) if defined $1;
-		    if ($identica) {
-			my ($user, $dent);
-			if ($1) {
-			    ($user, $dent) = &identica_pull($1); 
-			} else { 
-			    ($user, $dent) = &identica_pull();
-			}
-			if ($user && $dent){
-			    &say("en identi.ca \@$user dijo: $dent", $nick, $usenick, $priv);
-			} else {
-			    unless ($dent) {
-				&say("probablemente el usuario \@$user no este registrado en identi.ca :D", $nick, $usenick, $priv);
-			    } else {
-				&say("ergg un error con mi conexion a identi.ca seguramente :\\", $nick, $usenick, $priv);
-			    }
-			}
-		    } else {
-			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
-		    }
-		}
+                 #       &requestNickServ($nick);
+                 #   }
+		#}
 		elsif ($msg =~ m/^tuiter pull$|^tuiter pull (\w+)/) {
 			chomp($1) if defined $1;
 			if ($twitter) {
 			my ($user, $dent);
 			if ($1) {
-				($user, $dent) = &identica_pull($1, $twitter); 
+				($dent) = &identica_pull($1, $twitter); 
 			} 
-			if ($user && $dent){
-			    &say("en tuiter \@$user dijo: $dent", $nick, $usenick, $priv);
+			if ($dent){
+			    &say("en tuiter \@$1 dijo: $dent", $nick, $usenick, $priv);
 			} else {
 			    unless ($dent) {
-				&say("probablemente el usuario \@$user no este registrado en tuiter :D", $nick, $usenick, $priv);
+				&say("probablemente el usuario \@$1 no este registrado en tuiter, o tiene candadito", $nick, $usenick, $priv);
 			    } else {
 				&say("ergg un error con mi conexion seguramente :\\", $nick, $usenick, $priv);
 			    }
 			}
-		    } else {
-			&say("el plugin de identi.ca no esta configurado :\\", $nick, $usenick, $priv);
 		    }
 		}
 		elsif($msg =~ s/^cargar//) {
@@ -672,35 +669,35 @@ sub on_notice{
     $nick =~ s/\'//g;
     $msg =~ s/\'//g;
 
-    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+   # &say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
 
     my @answer = split(/\s+/, $msg);
-
+    # OLD Authentication Method, needs to be removed
     #is this an answer to a ACC request to nickserv? (admin comand)
-    if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
-    {
-        if($answer[2] == 3){
-            if($printOrSay == 1){
-                &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
-                $printOrSay = 0; #say it in the channel only once
-            }
-            else {
-                print "$answer[0] se ha autenticado.\n";
-            }
+    #if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
+    #{
+    #   if($answer[2] == 3){
+    #        if($printOrSay == 1){
+    #            &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
+    #            $printOrSay = 0; #say it in the channel only once
+    #        }
+    #        else {
+    #            print "$answer[0] se ha autenticado.\n";
+    #        }
             #Here you should do whatever it takes to mark that this nick is identified
             $hashNicks{ $answer[0] } = 1;#autenticated
-        }
-        else{
-           if($printOrSay == 1){
-               &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
-               $printOrSay = 0; #say it in the channel only once
-           }
-           else {
-               print "ergg! $answer[0] no se ha autenticado con NickServ.\n";
-           }
-               $hashNicks{ $answer[0] } = 0;#NOT autenticated
-        }
-    }
+    #    }
+    #    else{
+    #       if($printOrSay == 1){
+    #           &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
+    #           $printOrSay = 0; #say it in the channel only once
+    #       }
+    #       else {
+    #           print "ergg! $answer[0] no se ha autenticado con NickServ.\n";
+    #       }
+    #           $hashNicks{ $answer[0] } = 0;#NOT autenticated
+    #    }
+    #}
 }
 
 sub on_join{
@@ -715,8 +712,9 @@ sub on_join{
     $nick =~ s/\'//g;
 
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-
-    &requestNickServ($nick);
+    
+    # We need to get rid off this:
+    #&requestNickServ($nick);
 }
 
 #Sent whenever you, or someone around you, changes nicks.
@@ -735,6 +733,7 @@ sub on_nick{
     $newNick =~ s/\'//g;
 
     #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
+    # Get rid of this
     &forgetNickServ($oldNick);
     &requestNickServ($newNick);
 }
@@ -802,6 +801,7 @@ sub on_kick{
 
     #print "Me acaban de informar nick: $nickKicked, a sido pateado (kick) por $nickOP msg: $msg\n";#debug
     #print "$nickKicked kick, calling forgetNickServ.\n";#debug
+    &say("Uff... por fin... ya ere hora", $nickKicked, 'no', 'no');
 
     &forgetNickServ($nickKicked);
 
@@ -966,6 +966,7 @@ Sintaxis: perdonar nick
 
 sub forgetignore  {
 	my $msg = shift;
+	print "$msg vamos";
         my $sth = $dbh->prepare
             ("SELECT rowid from igno where nick='$msg'");
         $sth->execute();
@@ -1237,7 +1238,8 @@ sub quoteadd {
 }
 
 sub checkauth {
-	my $nick = shift;
+	my ($nick, $authe) = @_;
+	if (!$authe) { return undef } else { print "Auth = $authe\n"; }; # Nick Validation
 	my $sth = $dbh->prepare
 	    ("SELECT perm from users where nick='$nick'");
 	$sth->execute();
@@ -1245,32 +1247,32 @@ sub checkauth {
 	if ($ok) { return "ok" } else { return undef }
 }
 
-#check if user is identified (nickserv)
-sub requestNickServ {
-    my $nick = shift;
-
-    &forgetNickServ($nick);
-    
-    $irc->yield( privmsg => "NickServ", "ACC $nick");
-}
-#only for freenode
-sub checkNickServ {
-    my $nick = shift;
-
-    if(defined($hashNicks{ $nick })){
-        if($hashNicks{ $nick } == 1){
+#check if user is identified (nickserv) -- get rid of this
+#sub requestNickServ {
+#    my $nick = shift;
+#
+#    &forgetNickServ($nick);
+#    
+#    $irc->yield( privmsg => "NickServ", "ACC $nick");
+#}
+#only for freenode -- DELETE IT
+#sub checkNickServ {
+#    my $nick = shift;
+#
+#    if(defined($hashNicks{ $nick })){
+#        if($hashNicks{ $nick } == 1){
             #print "$nick esta Identificado con Nickserv\n";#debug
-            return "ok";
-        }
-    }
+#            return "ok";
+#        }
+#    }
     #print "$nick NO esta Identificado con Nickserv\n";#debug
-    return undef;
-}
+#    return undef;
+#}
 
-sub forgetNickServ {
-    my $nick = shift;
-    $hashNicks{ $nick } = 0;
-}
+#sub forgetNickServ {
+#    my $nick = shift;
+#    $hashNicks{ $nick } = 0;
+#}
 
 
 sub authen {
@@ -1507,21 +1509,21 @@ sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
 
         #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-        my $checkNick = undef;
-        if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-        {
-            $checkNick = &checkNickServ($nick);#check if the nick is identified
-        }
-        else
-        {
-            $checkNick = 'ok';
-        }
+        #my $checkNick = undef;
+        #if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
+        #{
+        #    $checkNick = &checkNickServ($nick);#check if the nick is identified
+        #}
+        #else
+        #{
+        #    $checkNick = 'ok';
+        #}
 
-        if($checkNick)
-        {
+        #if($checkNick)
+        #{
             my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
 	$sth->execute();
-        }
+        #}
 }
 
 sub fffact {
@@ -1686,12 +1688,10 @@ sub google {
 	# foreach (@{$goosh->results()}) {
 	# 	$answer = $_->URL();
 	# }
-        my $local_google_key = "$bconf{$bgkey}";
-        my $local_google_referer = "$bconf{$bgreferer}";
 
         my $search_string = shift;
         my $answer;
-        my $search = Google::Search->Web(q => $search_string, key => $local_google_key, referer => $local_google_referer);
+        my $search = Google::Search->Web(q => $search_string);
         my $result = $search->first;
         if ($result) {
             $answer = $result->uri;
@@ -1769,54 +1769,21 @@ sub getpipianlvl {
     return $row;
 }
 
-=item identica
-
-Las funciones de Identica
-identica say mensaje
-identica pull | identica pull foo
-
-=cut
-
-sub identica_say {
-    my ($message,$nick) = @_;
-
-    if(defined($bconf{$bishowNick}) && ($bconf{$bishowNick} eq 'true'))
-    {
-        $message = $message." (vía \@$nick)";
-    }
-
-    my $size = length($message);
-    if ($size <= 140){
-	$message = decode("utf-8", $message);
-	return $message if $identica->update("$message");
-    }else{
-	return undef;
-    }
-}
-
+# More cleaning need it in order to remove identica
 sub identica_pull {
 	my $nick   = shift @_;
-	my $server = shift @_;
-	if (!$server) {
-		$server = $identica;
+	my $server = shift @_; # Server needs to be removed
+	my $twitR;
+	print "I'll look for $nick\n";
+	eval {my $status = $twitter->lookup_users( {screen_name => $nick });};
+	if ($@) {return undef}
+	my $status = $twitter->lookup_users( {screen_name => $nick });
+	foreach my $results ( @{ $status }) {
+            print "Tuit: $results->{'status'}->{text}\n";
+	    $twitR = $results->{'status'}->{text}
 	}
-	if ($nick) {
-		my $fetch = $server->user_timeline({screen_name => $nick});
-		my $last_status = shift( @$fetch );
-		if ($last_status) {
-			my $dent = encode("utf-8", ${$last_status}{"text"});
-			return (${$last_status}{user}{"screen_name"}, $dent);
-		} else { return ($nick, undef); }
-	} else {
-		my $fetch = $server->home_timeline;
-		if ($fetch){
-			my $last_status = shift( @$fetch );
-			if ($last_status) {
-				my $dent = encode("utf-8", ${$last_status}{"text"});
-				return (${$last_status}{user}{"screen_name"}, $dent);
-			}
-		} else { return (undef, undef); }
-	}
+	return ($twitR, undef);
+
 }
 
 sub doaction {
@@ -1918,6 +1885,13 @@ exit 0;
 
 =head1 AUTHOR
 
-This program was written by Rene Mayorga E<lt>rmayorga@debian.orgE<gt>
+This program was written by: Rene Mayorga E<lt>rmayorga@debian.org.svE<gt>
+
+And Contributions have being made by:
+Wences Rene Arana Fuentes E<lt>aranaf51@gmail.comE<gt>
+Sebastian Oliva E<lt>tian2992@gmail.comE<gt>
+Jotam Jr. Trejo E<lt>jotamjr@gmail.comE<gt>
+Josue Abarca  E<lt>jmaslibre@debian.org.gtE<gt>
+Francisco Diaz
 
 =cut
