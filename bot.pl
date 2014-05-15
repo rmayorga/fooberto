@@ -1728,8 +1728,8 @@ sub say {
 	my ($msg, $nick, $usenick, $priv ) = @_;
 	my $channel = $bconf{$bchan};
 	$channel = "$nick" if $priv eq 'yes';
- 	#Handle encoding
-	$msg = encode_utf8($msg);
+ 	#Handle encoding will break some other characters
+	#$msg = encode_utf8($msg);
 	if ($usenick eq 'yes') {
 		$irc->yield( privmsg => $channel, "$nick: $msg");
 	} else {
@@ -1776,21 +1776,22 @@ sub identica_pull {
 	my $nick   = shift @_;
 	my $server = shift @_; # Server needs to be removed
 	my $twitR;
-	print "I'll look for $nick\n";
+	# Don't die please!
 	eval {my $status = $twitter->lookup_users( {screen_name => $nick });};
 	if ($@) {return undef}
 	my $status = $twitter->lookup_users( {screen_name => $nick });
 	foreach my $results ( @{ $status }) {
-            print "Tuit: $results->{'status'}->{text}\n";
 	    $twitR = $results->{'status'}->{text}
 	}
-	return ($twitR, undef);
+	
+	$twitR =~ s/\R/ /g;
+	return (encode_utf8($twitR), undef);
 
 }
 
 sub doaction {
 	my ($channel, $msg) = @_;
-		$irc->yield( ctcp => $channel => "ACTION $msg");
+	$irc->yield( ctcp => $channel => "ACTION $msg");
 	return
 }
 sub chanlog {
