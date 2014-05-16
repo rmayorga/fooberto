@@ -384,18 +384,6 @@ sub on_public {
 
                    #check if the user is in the elite group and Authenticated
 		   my $check = &checkauth($nick, $authe);
-
-		   # Get rid of this in the future
-                   #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-                   #my $checkNick = undef;
-                   # if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-                   # {
-                   #     $checkNick = &checkNickServ($nick);#check if the nick is identified
-                   # }
-                   # else
-                   # {
-                   #     $checkNick = 'ok';
-                   # }
                    
                    if (($check) && ($msg =~s/^olvidar//)) {
                        $msg =~ s/\ +//g;
@@ -539,28 +527,12 @@ sub on_public {
 			$about =~ s/^$target\ +//;
 			&sayto($target, $about); 
 		}
-               # elsif ($msg =~ s/^nickserv//) { ### GET RID OF THIS
-                    #&say("Autenticando a $nick", $nick, $usenick, $priv);#debug
-                #    $msg =~ s/^\ +//g;
-		 #  if (length($msg) >= 1) {
-                 #      my @seen = &dbuexist($msg);
-                 #      if ($seen[0]) {
-                 #          $printOrSay = 1;#show it in the channel
-                 #          &requestNickServ($msg);
-                 #      }
-                 #  }
-                 #   else{
-                 #       $printOrSay = 1;#show it in the channel
-                        #checking with NickServ
-                 #       &requestNickServ($nick);
-                 #   }
-		#}
 		elsif ($msg =~ m/^tuiter pull$|^tuiter pull (\w+)/) {
 			chomp($1) if defined $1;
 			if ($twitter) {
 			my ($user, $dent);
 			if ($1) {
-				($dent) = &identica_pull($1, $twitter); 
+				($dent) = &twitter_pull($1, $twitter); 
 			} 
 			if ($dent){
 			    &say("en tuiter \@$1 dijo: $dent", $nick, $usenick, $priv);
@@ -1669,8 +1641,7 @@ sub getpipianlvl {
     return $row;
 }
 
-# More cleaning need it in order to remove identica
-sub identica_pull {
+sub twitter_pull {
 	my $nick   = shift @_;
 	my $server = shift @_; # Server needs to be removed
 	my $twitR;
