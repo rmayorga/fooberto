@@ -108,9 +108,9 @@ my $debbranch = "DEBIAN.branches";
 my $bgreferer = "BOT.google_referer";
 
 # Clean up need it here
-my $bishowNick = "IDENTICA.showNick";
-my $bicheckNickserv = "IDENTICA.checkNickserv";
-my $bionlyElite = "IDENTICA.onlyElite";
+#my $bishowNick = "IDENTICA.showNick";
+#my $bicheckNickserv = "IDENTICA.checkNickserv";
+#my $bionlyElite = "IDENTICA.onlyElite";
 
 my $ckey = "TWITTER.ckey";
 my $csecret = "TWITTER.csecret";
@@ -121,10 +121,6 @@ my @jugadores;
 my $cargada=0;
 my $contRul=-1;
 my $indRul;
-
-# rray to track nickserv identified nicks
-my %hashNicks = ();
-my $printOrSay = 0; #0 print it for debug. 1 say it in the channel
 
 
 # Why we need this ?
@@ -668,36 +664,7 @@ sub on_notice{
     #take off apostrofes. This will be added by each insert comand.
     $nick =~ s/\'//g;
     $msg =~ s/\'//g;
-
-   # &say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-
     my @answer = split(/\s+/, $msg);
-    # OLD Authentication Method, needs to be removed
-    #is this an answer to a ACC request to nickserv? (admin comand)
-    #if(($nick eq 'NickServ')&&( $answer[1] eq 'ACC' ))
-    #{
-    #   if($answer[2] == 3){
-    #        if($printOrSay == 1){
-    #            &say("$answer[0] se ha autenticado.", $answer[0], 'no', 'no');
-    #            $printOrSay = 0; #say it in the channel only once
-    #        }
-    #        else {
-    #            print "$answer[0] se ha autenticado.\n";
-    #        }
-            #Here you should do whatever it takes to mark that this nick is identified
-            $hashNicks{ $answer[0] } = 1;#autenticated
-    #    }
-    #    else{
-    #       if($printOrSay == 1){
-    #           &say("ergg! $answer[0] no se ha autenticado con NickServ.", $answer[0], 'no', 'no');
-    #           $printOrSay = 0; #say it in the channel only once
-    #       }
-    #       else {
-    #           print "ergg! $answer[0] no se ha autenticado con NickServ.\n";
-    #       }
-    #           $hashNicks{ $answer[0] } = 0;#NOT autenticated
-    #    }
-    #}
 }
 
 sub on_join{
@@ -711,14 +678,11 @@ sub on_join{
     #take off apostrofes. This will be added by each insert comand.
     $nick =~ s/\'//g;
 
-    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-    
-    # We need to get rid off this:
-    #&requestNickServ($nick);
 }
 
 #Sent whenever you, or someone around you, changes nicks.
 sub on_nick{
+   # We need cleaning here
     my ( $kernel, $who, $newWho ) = @_[ KERNEL, ARG0, ARG1 ];
     my $oldNick = ( split /!/, $who )[0];
     my $newNick = ( split /!/, $newWho )[0];
@@ -732,10 +696,6 @@ sub on_nick{
     $oldNick =~ s/\'//g;
     $newNick =~ s/\'//g;
 
-    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-    # Get rid of this
-   # &forgetNickServ($oldNick);
-   # &requestNickServ($newNick);
 }
 
 #Sent whenever someone leaves a channel that you're on
@@ -752,12 +712,6 @@ sub on_part{
     $nick =~ s/\'//g;
     $msg =~ s/\'//g;
     $channel =~ s/\'//g;
-
-
-    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-    #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
-    #print "$nick part, calling forgetNickServ.\n";#debug
-    #&forgetNickServ($nick);
 }
 
 
@@ -772,12 +726,6 @@ sub on_quit{
     #take off apostrofes. This will be added by each insert comand.
     $nick =~ s/\'//g;
     $msg =~ s/\'//g;
-
-
-    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-    #print "Me acaban de informar nick: $nick, msg: $msg\n";#debug
-    #print "$nick quit, calling forgetNickServ.\n";#debug
-    #&forgetNickServ($nick);
 }
 
 #Sent whenever someone gets booted off a channel that you're on
@@ -796,15 +744,7 @@ sub on_kick{
     $nickOP =~ s/\'//g;
     $msg =~ s/\'//g;
     $channel =~ s/\'//g;
-
-    #&say("Me acaban de informar nick: $nick, msg: $msg", $nick, 'no', 'no');#debug
-
-    #print "Me acaban de informar nick: $nickKicked, a sido pateado (kick) por $nickOP msg: $msg\n";#debug
-    #print "$nickKicked kick, calling forgetNickServ.\n";#debug
-    &say("Uff... por fin... ya ere hora", $nickKicked, 'no', 'no');
-
-    #&forgetNickServ($nickKicked);
-
+    &say("Uff... por fin... ya ere hora que le dieran kick", $nickKicked, 'no', 'no');
     # print ouput to screen and also log it
     my $ts = strftime("%Y-%m-%dT%H:%M:%S", localtime);
 
@@ -1247,34 +1187,6 @@ sub checkauth {
 	if ($ok) { return "ok" } else { return undef }
 }
 
-#check if user is identified (nickserv) -- get rid of this
-#sub requestNickServ {
-#    my $nick = shift;
-#
-#    &forgetNickServ($nick);
-#    
-#    $irc->yield( privmsg => "NickServ", "ACC $nick");
-#}
-#only for freenode -- DELETE IT
-#sub checkNickServ {
-#    my $nick = shift;
-#
-#    if(defined($hashNicks{ $nick })){
-#        if($hashNicks{ $nick } == 1){
-            #print "$nick esta Identificado con Nickserv\n";#debug
-#            return "ok";
-#        }
-#    }
-    #print "$nick NO esta Identificado con Nickserv\n";#debug
-#    return undef;
-#}
-
-#sub forgetNickServ {
-#    my $nick = shift;
-#    $hashNicks{ $nick } = 0;
-#}
-
-
 sub authen {
 	my ($nick, $gpass) = @_;
 	my $sth = $dbh->prepare
@@ -1508,22 +1420,8 @@ sub forgetfact {
 sub putfact {
 	my ($fact, $fulltext, $nick) = @_;
 
-        #check with nickserv the nickname (if checkNickserv='true' in bot.conf)
-        #my $checkNick = undef;
-        #if ( defined($bconf{$bicheckNickserv}) && ($bconf{$bicheckNickserv} eq 'true')  )
-        #{
-        #    $checkNick = &checkNickServ($nick);#check if the nick is identified
-        #}
-        #else
-        #{
-        #    $checkNick = 'ok';
-        #}
-
-        #if($checkNick)
-        #{
-            my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
+        my $sth = $dbh->prepare("INSERT INTO facts (tipe, date, fact, fulltext, who) values ('fact', date('now','localtime'), '$fact', '$fulltext', '$nick') ");
 	$sth->execute();
-        #}
 }
 
 sub fffact {
