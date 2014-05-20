@@ -26,6 +26,7 @@ use XML::Simple;
 use Net::Twitter;
 use Encode;
 use POSIX;
+use Net::LastFMAPI;
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -603,6 +604,12 @@ sub on_public {
                        &say($out, $nick, $usenick, $priv);
                    }
 		}
+		elsif ($msg =~ s/lastfm//) {
+		   $msg =~  s/\ +//g;
+		   my $out = &_lastfm($msg);
+		   &say($out, $nick, $usenick, $priv);
+		}
+		  
 		else {  
 			$msg =~ s/^\ +//g;
 			$msg =~ s/\'//g;
@@ -1705,6 +1712,30 @@ sub kick {
     
 
 # }
+
+=item lastfm
+
+Sintaxis: lastm user
+
+=cut
+
+sub _lastfm {
+	my ($msg) = @_;
+	# Check if we are ready and user exists
+	eval { lastfm("user.getRecentTracks", user=>"$msg", limit=>'1'); } ;
+	if ($@) { return ("usuario no encontrado") ; } ;
+	my $lastF = lastfm("user.getRecentTracks", user=>"$msg", limit=>'1');
+	my @Alast_song  = $lastF->{'recenttracks'}->{'track'}; 
+	#if ( not defined (@Alast_song))  { return ("usuario no encontrado") ; } ;
+	eval {$Alast_song[0][0]->{'@attr'}->{'nowplaying'}}; 
+	if ( $@ ) { return ("$msg no esta haciendo scrobbling"); };
+	my $song = encode_utf8("$Alast_song[0][0]->{'name'}");
+	my $artist = encode_utf8("$Alast_song[0][0]->{'artist'}->{'#text'}");
+	if ( $Alast_song[0][0]->{'@attr'}->{'nowplaying'}) { 
+		return ("$msg is listening: $song - $artist");
+	}
+	return ("$msg no esta registrado"); 
+}
 
 
 =item help
