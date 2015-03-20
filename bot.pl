@@ -27,6 +27,9 @@ use Net::Twitter;
 use Encode;
 use POSIX;
 use Net::LastFMAPI;
+use JSON qw( decode_json );
+use DateTime;
+
 
 # get the pod of this file
 my $parser = Pod::POM->new();
@@ -1235,46 +1238,50 @@ Si el pais no se especifica, se devuelve el ultimo temblor registrado en el mund
 =cut
 sub temblor {
 	my $msg = shift;
-        my $url = "";
+      my $url = "";
 	if  (length($msg) >= 1) {
             #to lower case
             $msg = lc($msg);
             #to first letter Uppper
-            $msg = ucfirst($msg);
+            #$msg = ucfirst($msg);
             $msg = quotemeta($msg);
-            $url= 'http://earthquake.usgs.gov/earthquakes/catalogs/7day-M2.5.xml';
+            # Lets get the JSon with the information of last week's earthquakes
+            $url= 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson';
 	}
         else
 	{
-            # I just need the XML with the latest earthquakes (last day)
-            $url= 'http://earthquake.usgs.gov/earthquakes/catalogs/1day-M2.5.xml';
+            # I just need the JSon with the latest earthquakes (last day)
+            $url= 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson';
 	}
 	my $out = "";
 	# Retrieve the feed, or die gracefully
-	my $feed_to_parse = get ($url) or die "I can't get the feed you want";
-	# Parse the XML
-	my $parser = XML::Simple->new( );
-	my $rss = $parser->XMLin("$feed_to_parse");
+      my $feed = get($url) or  die "I can't get the feed you want";
+	# Parse the JSon
+	my $datos_sismos = decode_json($feed);
 
 	if  (length($msg) >= 1)
 	{
-		foreach my $key (keys (%{$rss->{entry}}))
+            @sismos = @{$datos_sismos->{features}};
+		foreach my $sismo (@sismos)
 		{
-			if ($rss->{entry}->{$key}->{'title'} =~ m/$msg/)
+			if (lc($sismo->{"properties"}{"place"}) =~ m/$msg/)
 			{
-                            my $title = $rss->{entry}->{$key}->{'title'};
-                            my $date = $rss->{entry}->{$key}->{'updated'};
-                            $out = $out.$title." Updated ".$date;
+                            my $title = $sismo->{"properties"}{"title"};
+                            my $epoch = $sismo->{"properties"}{"time"};
+                            my $time = DateTime->from_epoch( epoch => $epoch/1000 );
+                            $out = $out.$title." ocurrio en ".$time;
                             $out = $out.' || ';
                         }
 		}
 	}
 	else
 	{
-		if ($feed_to_parse =~ /<entry><id>.*?<\/id><title>(.*?)<\/title><updated>(.*?)<\/updated>/s)
-                {
-                    $out = "Ultimo temblor: ".$1." ".$2;
-                }
+               @sismos = @{$datos_sismos->{features}};
+               # First item at the list is the lastes earthquake
+		    my $title = $sismos[0]{"properties"}{"title"};
+               my $epoch = $sismos[0]{"properties"}{"time"};
+               my $time = DateTime->from_epoch( epoch => $epoch/1000 );
+               $out = $out.$title." ocurrio en ".$time;
 	}
 	$out = substr($out, 0, 199);
 	return $out;
