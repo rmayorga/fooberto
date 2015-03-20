@@ -1238,7 +1238,7 @@ Si el pais no se especifica, se devuelve el ultimo temblor registrado en el mund
 =cut
 sub temblor {
 	my $msg = shift;
-      my $url = "";
+        my $url = "";
 	if  (length($msg) >= 1) {
             #to lower case
             $msg = lc($msg);
@@ -1255,13 +1255,13 @@ sub temblor {
 	}
 	my $out = "";
 	# Retrieve the feed, or die gracefully
-      my $feed = get($url) or  die "I can't get the feed you want";
+        my $feed = get($url) or  die "I can't get the feed you want";
 	# Parse the JSon
 	my $datos_sismos = decode_json($feed);
 
 	if  (length($msg) >= 1)
 	{
-            @sismos = @{$datos_sismos->{features}};
+                my @sismos = @{$datos_sismos->{features}};
 		foreach my $sismo (@sismos)
 		{
 			if (lc($sismo->{"properties"}{"place"}) =~ m/$msg/)
@@ -1276,9 +1276,9 @@ sub temblor {
 	}
 	else
 	{
-               @sismos = @{$datos_sismos->{features}};
+               my @sismos = @{$datos_sismos->{features}};
                # First item at the list is the lastes earthquake
-		    my $title = $sismos[0]{"properties"}{"title"};
+	       my $title = $sismos[0]{"properties"}{"title"};
                my $epoch = $sismos[0]{"properties"}{"time"};
                my $time = DateTime->from_epoch( epoch => $epoch/1000 );
                $out = $out.$title." ocurrio en ".$time;
