@@ -1197,7 +1197,7 @@ sub urbano {
 	my $out = "";
 	my $url = "";
 	my $page = "";			   
-	if ($msg =~ s/^random//) {
+	if ($msg =~ s/^.?random//) {
 		$url = "http://www.urbandictionary.com/random.php";
 		$page = get($url);
 		$msg = $1 if $page =~ /<a href='\/\/www.urbandictionary.com\/define.php\?term=(.*)'>English<\/a>/;
