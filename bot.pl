@@ -1195,7 +1195,6 @@ sub urbano {
 	my $msg = shift;
     my $ndy = "";      # ndy means Not defined yet, used as a flag for those non-existing definitions.
 	my $out = "";
-	my $out = "";
 	my $url = "";
 	my $page = "";			   
 	if ($msg =~ s/^random//) {
