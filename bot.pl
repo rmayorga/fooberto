@@ -1186,47 +1186,60 @@ sub authen {
 =item urbano
 
 Definiciones de urbandictionary
-Sintaxis: urbano palabra
+Sintaxis: urbano palabra: devuelve una de las definiciones de la palabra
+                          si existe
+          urbano random: devuelve la definicion aleatoria del sitio web.
 
 =cut
 sub urbano {
 	my $msg = shift;
-        my $ndy = "";      # ndy means Not defined yet, used as a flag for those non-existing definitions.
+    my $ndy = "";      # ndy means Not defined yet, used as a flag for those non-existing definitions.
 	my $out = "";
-	my $url = "http://www.urbandictionary.com/define.php?term=$msg";
-	my $page = get($url);
-        my @definitions = ();
-        foreach (split ('<td>', $page))
+	my $out = "";
+	my $url = "";
+	my $page = "";			   
+	if ($msg =~ s/^random//) {
+		$url = "http://www.urbandictionary.com/random.php";
+		$page = get($url);
+		$msg = $1 if $page =~ /<a href='\/\/www.urbandictionary.com\/define.php\?term=(.*)'>English<\/a>/;
+        $msg =~ tr/\+/ /
+	}
+	else {
+	    $url = "http://www.urbandictionary.com/define.php?term=$msg";
+	    $page = get($url);
+    }
+    my @definitions = ();
+    foreach (split ('<td>', $page))
+    {
+        # Remove some garbage from the defitions
+        my $content =  $_;
+        $content =~ s/&\#39;/'/g;
+        $content =~ s/&quot;/\"/g;
+        $content =~ s/&amp;/&/g;
+        $content =~ s/&lt;/</g;
+        $content =~ s/&gt;/>/g;
+        $content =~ s/\r//g;
+        $content =~ s/<br>//g;
+        $content =~ s/<br\/>//g;
+        $content =~ s/<a.*?>//g;
+        $content =~ s/<\/a>//g;
+        $content =~ s/\n//g;
+        if ($content =~ /\'not_defined_yet\'/s)
         {
-                # Remove some garbage from the defitions
-                my $content =  $_;
-                $content =~ s/&\#39;/'/g;
-                $content =~ s/&quot;/\"/g;
-                $content =~ s/&amp;/&/g;
-                $content =~ s/&lt;/</g;
-                $content =~ s/&gt;/>/g;
-                $content =~ s/\r//g;
-                $content =~ s/<br>//g;
-                $content =~ s/<br\/>//g;
-                $content =~ s/<a.*?>//g;
-                $content =~ s/<\/a>//g;
-                $content =~ s/\n//g;
-                if ($content =~ /\'not_defined_yet\'/s)
-                {
-                        $ndy = "err, no existe pero me suena a: ";
-                }
-                #if ($content =~ /<div\sclass="definition">(.*?)<\/div>/s)
-                if ($content =~ /<div\sclass='meaning'>(.*?)<\/div>/s)
-                {
-			push @definitions,$1;
-                }
+            $ndy = "err, no existe pero me suena a: ";
         }
-        if (@definitions == 0)
+        #if ($content =~ /<div\sclass="definition">(.*?)<\/div>/s)
+        if ($content =~ /<div\sclass='meaning'>(.*?)<\/div>/s)
         {
-            return $out;
+	        push @definitions,$1;
         }
+    }
+    if (@definitions == 0)
+    {
+        return $out;
+    }
 	$out = $ndy.substr($definitions[int rand @definitions],0,199);
-	return $out;
+	return $msg." : ".$out;
 }
 
 =item temblor
@@ -1803,6 +1816,6 @@ Wences Rene Arana Fuentes E<lt>aranaf51@gmail.comE<gt>
 Sebastian Oliva E<lt>tian2992@gmail.comE<gt>
 Jotam Jr. Trejo E<lt>jotamjr@gmail.comE<gt>
 Josue Abarca  E<lt>jmaslibre@debian.org.gtE<gt>
-Francisco Diaz
+Francisco Diaz E<lt>fcodiaz@gmail.comE<gt>
 
 =cut
