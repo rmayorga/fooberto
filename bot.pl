@@ -1630,7 +1630,7 @@ sub fortune {
 
 sub clima {
 	my $city = shift;
-	my $clima = `ansiweather -a false -s false -l city`;
+	my $clima = `ansiweather -a false -s false -l $city`;
 	return $clima;
 }
 
