@@ -1193,7 +1193,7 @@ Sintaxis: urbano palabra: devuelve una de las definiciones de la palabra
 =cut
 sub urbano {
 	my $msg = shift;
-    my $ndy = "";      # ndy means Not defined yet, used as a flag for those non-existing definitions.
+        my $ndy = "";      # ndy means Not defined yet, used as a flag for those non-existing definitions.
 	my $out = "";
 	my $url = "";
 	my $page = "";			   
@@ -1201,14 +1201,14 @@ sub urbano {
 		$url = "http://www.urbandictionary.com/random.php";
 		$page = get($url);
 		$msg = $1 if $page =~ /<a href='\/\/www.urbandictionary.com\/define.php\?term=(.*)'>English<\/a>/;
-        $msg =~ tr/\+/ /
+                $msg =~ tr/\+/ /
 	}
 	else {
 	    $url = "http://www.urbandictionary.com/define.php?term=$msg";
 	    $page = get($url);
     }
     my @definitions = ();
-    foreach (split ('<td>', $page))
+    foreach (split ('<div', $page))
     {
         # Remove some garbage from the defitions
         my $content =  $_;
@@ -1228,7 +1228,7 @@ sub urbano {
             $ndy = "err, no existe pero me suena a: ";
         }
         #if ($content =~ /<div\sclass="definition">(.*?)<\/div>/s)
-        if ($content =~ /<div\sclass='meaning'>(.*?)<\/div>/s)
+        if ($content =~ /\sclass=\'meaning\'>(.*?)<\/div>/s)
         {
 	        push @definitions,$1;
         }
