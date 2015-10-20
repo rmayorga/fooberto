@@ -279,6 +279,12 @@ sub on_public {
 			&say($out, $nick, $usenick, $priv);
 		   }
 		}
+		elsif ($msg =~ s/^clima//i) {
+		   if (length($msg) >= 1) {
+		        my $out = &clima($msg);
+			&say($out, $nick, $usenick, $priv);
+		   }
+		}
 		elsif ($msg =~ s/^descifrar//) {
 		   if (length($msg) >= 1) {
 		        my $out = &descifrar($msg);
@@ -1619,6 +1625,13 @@ sub fortune {
 	my $fortune = `fortune  -a -n 160 -s`;
 	$fortune =~ s/\s+/ /g;
 	return $fortune;
+}
+
+
+sub clima {
+	my $city = shift;
+	my $clima = `ansiweather -a false -s false -l $city`;
+	return $clima;
 }
 
 sub say {
