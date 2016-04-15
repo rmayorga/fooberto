@@ -1764,9 +1764,10 @@ sub _lastfm {
 	my $song = encode_utf8("$Alast_song[0][0]->{'name'}");
 	my $artist = encode_utf8("$Alast_song[0][0]->{'artist'}->{'#text'}");
 	if ( $Alast_song[0][0]->{'@attr'}->{'nowplaying'}) { 
-		return ("$msg is listening: $song - $artist");
-	}
-	return ("$msg no esta registrado"); 
+		return ("$msg está oyendo: $song - $artist");
+		} else {
+			return ("$msg escuchó la última vez: $song - $artist");
+		}
 }
 
 
