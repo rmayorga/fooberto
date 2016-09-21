@@ -254,7 +254,7 @@ sub on_public {
     &pipiancatch($nick, $msg);
 	
 	# url to tiny catcher
-    &urltotinycatch($nick, $msg, $usenick, $priv);
+    &urltotinycatch($nick, $msg);
 	
     # capture command char (also this should go on the config file)
 
@@ -1653,15 +1653,15 @@ sub say {
 }
 
 sub urltotinycatch {
-    my ($nick, $msg, $usenick, $priv) = @_;
+    my ($nick, $msg) = @_;
    
     while($msg =~ m/https?:\/\/\S+/g){
         my $out = &tiny($&);
 
     if ($out) {
-        &say("$out", $nick, $usenick, $priv);
+        &say("$out", $nick);
     }else {
-        &say("err, tinyurl parece estar teniendo problemas", $nick, $usenick, $priv);
+        &say("err, tinyurl parece estar teniendo problemas", $nick);
     }
     }
 }
