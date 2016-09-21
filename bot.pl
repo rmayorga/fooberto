@@ -252,6 +252,10 @@ sub on_public {
     &karmacatch($nick, $msg);
 # pipian level catcher
     &pipiancatch($nick, $msg);
+	
+	# url to tiny catcher
+    &urltotinycatch($nick, $msg, $usenick, $priv);
+	
     # capture command char (also this should go on the config file)
 
     if ( ($msg =~ m/^$bconf{$bcomm}/) || ($msg =~ m/^$bconf{$bnick}(,|;|:).+/ ) || ($channel eq $bconf{$bnick}) ) {
@@ -1646,6 +1650,20 @@ sub say {
 		$irc->yield( privmsg => $channel, "$msg");
 	}
 	return
+}
+
+sub urltotinycatch {
+    my ($nick, $msg, $usenick, $priv) = @_;
+   
+    while($msg =~ m/https?:\/\/\S+/g){
+        my $out = &tiny($&);
+
+    if ($out) {
+        &say("$out", $nick, $usenick, $priv);
+    }else {
+        &say("err, tinyurl parece estar teniendo problemas", $nick, $usenick, $priv);
+    }
+    }
 }
 
 sub pipiancatch {
