@@ -1656,13 +1656,15 @@ sub urltotinycatch {
     my ($nick, $msg) = @_;
    
     while($msg =~ m/https?:\/\/\S+/g){
-        my $out = &tiny($&);
+		if(length($&) > 30){
+			my $out = &tiny($&);
 
-    if ($out) {
-        &say("$out", $nick);
-    }else {
-        &say("err, tinyurl parece estar teniendo problemas", $nick);
-    }
+			if ($out) {
+				&say("$out", $nick);
+			}else {
+				&say("err, tinyurl parece estar teniendo problemas", $nick);
+			}
+		}
     }
 }
 
