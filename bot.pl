@@ -1221,18 +1221,7 @@ sub urbano {
     foreach (split ('<div', $page))
     {
         # Remove some garbage from the defitions
-        my $content =  $_;
-        $content =~ s/&\#39;/'/g;
-        $content =~ s/&quot;/\"/g;
-        $content =~ s/&amp;/&/g;
-        $content =~ s/&lt;/</g;
-        $content =~ s/&gt;/>/g;
-        $content =~ s/\r//g;
-        $content =~ s/<br>//g;
-        $content =~ s/<br\/>//g;
-        $content =~ s/<a.*?>//g;
-        $content =~ s/<\/a>//g;
-        $content =~ s/\n//g;
+        my $content =  clean_output($_);
         if ($content =~ /\'not_defined_yet\'/s)
         {
             $ndy = "err, no existe pero me suena a: ";
@@ -1248,7 +1237,7 @@ sub urbano {
         return $out;
     }
 	$out = $ndy.substr($definitions[int rand @definitions],0,199);
-	return $msg." : ".$out;
+	return clean_output($msg." : ".$out);
 }
 
 =item temblor
@@ -1309,6 +1298,34 @@ sub temblor {
 	return $out;
 }
 
+=item clean_output
+
+ El proposito de esta funcion es limpiar codigos encontrados en URL o etiquetas HTML.
+
+ Sintaxis: clean_output resultado
+=cut
+sub clean_output {
+    my $content = shift;
+    $content =~ s/&\#39;/'/g;
+    $content =~ s/\%20/ /g;
+    $content =~ s/\%21/!/g;
+    $content =~ s/\%23/#/g;
+    $content =~ s/\%25/%/g;
+    $content =~ s/\%27/\'/g;
+    $content =~ s/\%3F/?/g;
+    $content =~ s/&quot;/\"/g;
+    $content =~ s/&amp;/&/g;
+    $content =~ s/&lt;/</g;
+    $content =~ s/&gt;/>/g;
+    $content =~ s/\r//g;
+    $content =~ s/<br>//g;
+    $content =~ s/<br\/>//g;
+    $content =~ s/<a.*?>//g;
+    $content =~ s/<\/a>//g;
+    $content =~ s/\n//g;
+    return $content
+}
+    
 =item tiny
 
  Esta funcion se encarga de tomar una direccion URL y devuelve como resultado el hash
