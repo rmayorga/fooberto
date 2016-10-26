@@ -1673,7 +1673,7 @@ sub urltotinycatch {
     my ($nick, $msg) = @_;
    
     while($msg =~ m/https?:\/\/\S+/g){
-		if(length($&) > 80){
+		if(length($&) > 90){
 			my $out = &tiny($&);
 
 			if ($out) {
